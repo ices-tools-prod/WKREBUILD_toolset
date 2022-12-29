@@ -9,18 +9,6 @@
 
 library(mse)
 
-# SETUP parallel
-
-library(doFuture)
-plan("multicore", workers=2)
-registerDoFuture()
-options(Future.rng.onMisuse = "ignore")
-
-# PROGRESS reporting
-library(progressr)
-handlers(global = TRUE)
-handlers("progress")
-
 # LOAD data
 load('data/om.RData')
 
@@ -29,8 +17,8 @@ data(statistics)
 
 # SUBSET and propagate
 
-om <- iter(om, 1:500)
-oem <- iter(oem, 1:500)
+om <- iter(om, 1:50)
+oem <- iter(oem, 1:50)
 
 # UPDATE intermediate year with Ftarget
 
@@ -52,6 +40,10 @@ control <- mpCtrl(list(
   # tac.is
   isys = mseCtrl(method=tac.is, args=list(recyrs=25, fmin=0.001))
 ))
+
+plot_hockeystick.hcr(control$hcr,
+  labels=c(lim="Blim", trigger="Btrigger", min="", target="Ftarget")) +
+  xlab("SSB") + ylab(expression(bar(F)))
 
 system.time(
 ices <- mp(om, oem=oem, ctrl=control, args=mseargs)
@@ -96,6 +88,10 @@ control <- mpCtrl(list(
   isys = mseCtrl(method=tac.is, args=list(recyrs=25, fmin=0.001))
 ))
 
+plot_hockeystick.hcr(control$hcr,
+  labels=c(lim="Blim", trigger="Btrigger", min="", target="Ftarget")) +
+  xlab("SSB") + ylab(expression(bar(F)))
+
 system.time(
 rbld <- mp(om, oem=oem, ctrl=control, args=mseargs)
 )
@@ -107,53 +103,6 @@ plot(om, ices, rbld)
 # SAVE
 
 save(ices, rbld, file="model/runs.RData", compress="xz")
-
-
-
-# TODO: bias @deviances$stock.n
-
-deviances(oem)$stk$stock.n <- deviances(oem)$stk$catch.n
-
-icese <- mp(om, oem=oem, ctrl=control, args=mseargs)
-
-plot(om, ices, icese)
-plot(om, icese)
-
-stock.n(stock(ices)) / stock.n(stock(icese))
-stock.n(stock(ices)) / stock.n(stock(icese))
-
-ssb(ices) / ssb(icese)
-
-
-# TODO: ADD observations to plot
-plot_hockeystick.hcr(control$hcr,
-  labels=c(lim="Blim", trigger="Btrigger", min="", target="Ftarget")) +
-  xlab("SSB") + ylab(expression(bar(F)))
-
-plot_hockeystick.hcr(control$hcr, obs=stock,
-  labels=c(lim="Blim", trigger="Btrigger", min="", target="Ftarget")) +
-  xlab("SSB") + ylab(expression(bar(F)))
-
-plot_hockeystick.hcr(control$hcr, obs=stock(ices), alpha=0.1,
-  labels=c(lim="Blim", trigger="Btrigger", min="", target="Ftarget")) +
-  xlab("SSB") + ylab(expression(bar(F)))
-
-
-
-
-
-
-# --- cpue & catch + harvest
-
-
-
-
-
-control <- mpCtrl(list(
-  est = mseCtrl(method=perfect.sa),
-  hcr = mseCtrl(method=catchSSB.hcr,
-    args=list(MSY=14000))))
-
 
 
 # --- APPLY CCSBT trend HCR
