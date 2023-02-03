@@ -8,24 +8,37 @@
 
 
 library(mse)
-library(FLBRP)
 library(FLSRTMB)
 library(AAP)
+
+source("utilities.R")
 
 # --- LOAD data, inputs and results of 2022 ICES WGNSSK sol.27.4 SA
 
 load('bootstrap/data/sol274.RData')
 
-# RUN McMC fit
-
-control <- AAP.control(pGrp=TRUE, qplat.surveys=8, qplat.Fmatrix=9,
+# SETUP McMC control
+aapcontrol <- AAP.control(pGrp=TRUE, qplat.surveys=8, qplat.Fmatrix=9,
   Sage.knots=6, Fage.knots=8, Ftime.knots=28, mcmc=TRUE)
 
+# RUN McMC fit
 system.time(
-  mcfit <- aap(stock, indices, control=control, verbose=TRUE)
+  mcfit <- aap(stock, indices, control=aapcontrol, verbose=TRUE)
 )
 
-save(mcfit, file="data/mcfit.RData", compress="xz")
+aapcontrol <- AAP.control(pGrp=TRUE, qplat.surveys=8, qplat.Fmatrix=9,
+  Sage.knots=6, Fage.knots=8, Ftime.knots=28, mcmc=FALSE)
+
+# RUN retros
+
+retros <- FLStocks(lapply(seq(2021, 2021 - 5), function(x)
+  aap(window(stock, end=x), window(indices, end=x), control=aapcontrol) +
+    window(stock, end=x)
+))
+
+# SAVE
+save(mcfit, retros, file="data/mcfit.RData", compress="xz")
+
 
 # --- SETUP om & oem
 
@@ -35,37 +48,55 @@ load('data/mcfit.RData')
 fy <- 2042
 
 # ASSEMBLE McMC FLStock
-runmc <- stock + mcfit
+runmc <- iter(stock + mcfit, seq(100))
 
 # - FIT SRR
 
+# segreg
+srr <- fmle(as.FLSR(runmc, model="segreg"), fixed=list(b=icespts$Blim))
+
+# bevholt
 srr <- as.FLSR(runmc, model="bevholtSV")
-
-system.time(
 srr <- Reduce(combine, lapply(seq(dims(srr)$iter), function(i)
-  srrTMB(iter(sr, i), spr0=spr0y(stock))))
-)
+  srrTMB(iter(srr, i), spr0=spr0y(stock))))
 
-# - GET OM biological refpts
-
-brp <-  brp(FLBRP(runmc, sr=srr))
-
-# EXTEND srr into future
-srr <- window(srr, end=fy)
-
-# RESAMPLE last 21 years of residuals
-residuals(srr)[, ac(2022:fy)] <- exp(residuals(srr)[, sample(ac(2000:2021),
-  21)])
-
-# RESHAPE and subset refpts
-refpts <- remap(refpts(brp))
-
-# CONSTRUCT om
-om <- FLom(stock=fwdWindow(runmc, end=fy), refpts=refpts, sr=srr,
+# - CONSTRUCT om
+om <- FLom(stock=runmc, refpts=icespts, sr=srr,
   projection=mseCtrl(method=fwd.om))
 
-# - CONSTRUCT oem
-it <- 1000
+# SETUP om future
+om <- fwdWindow(om, end=fy)
+
+# SET future om deviances: RESAMPLE last 21 years of residuals
+residuals(sr(om))[, ac(2022:fy)] <- exp(residuals(srr)[, sample(ac(2000:2021),
+  21)])
+
+# UPDATE intermediate year with Ftarget
+
+om <- fwd(om, control=fwdControl(quant='fbar', year=2022,
+  value=icespts$Fmsy))
+
+
+#  --- CONSTRUCT oem
+
+oem <- FLoem(
+  observations=list(stk=stock(om)),
+  deviances=list(stk=FLQuants(stock.n=retroErrorByAge(retros, stock.n(om)))),
+  method=perfect.oem
+)
+
+# --- CONSTRUCT SA deviances
+
+sadevs <- FLQuants(stock.n=retroErrorByAge(retros, stock.n(om)))
+
+# SAVE
+
+save(om, oem, icespts, file="data/sol274.RData", compress="xz")
+
+
+# --- CONSTRUCT oem for full feedback
+
+it <- dim(om)[6]
 
 # observations: stk, idx, lens
 index.q(indices$BTS)[] <- q.hat(mcfit)$BTS
@@ -75,25 +106,15 @@ obs <- list(stk=fwdWindow(runmc, end=fy),
     # TODO: propagate(FLlst)
     idx=lapply(fwdWindow(indices, end=fy), propagate, it))
 
-# length samples
-vbpars <- FLPar(linf=38.4, k=0.306, t0=-1.70)
-ialk <- invALK(vbpars, age=1:10, cv=0.15, lmax=1.25)
-lsam <- lenSamples(window(catch.n(obs$stk), end=2021), ialk)
-obs$len <- window(lsam, end=2042)
-
 # deviances
 devs <- list(stk=list(
-    catch.n=rlnorm(it, window(catch.n(runmc), end=fy) %=% 0, 0.15)),
+    catch.n=rlnorm(it, window(catch.n(runmc), end=fy) %=% 0, 0.15),
+    stock.n=rlnorm(1000, window(catch.n(runmc), end=fy) %=% 0,
+  expand(yearMeans(log(sqrt(iterVars(stock.n(om)[, ac(2002:2021)])))),
+  year=1957:2042))),
   idx=lapply(obs$idx, function(x) rlnorm(it,
     window(index.q(x), end=fy) %=% 0, 0.20))
-  #, lens=lsam %=% 0
 )
 
+# lognormal w/age-specific errors
 oem <- FLoem(observations=obs, deviances=devs, method=sampling.oem)
-
-# TODO: verify(om, oem)
-
-
-# SAVE
-
-save(om, oem, icespts, file="data/om.RData", compress="xz")
