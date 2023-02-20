@@ -1,0 +1,47 @@
+Package: FLCore
+Title: Core Package of FLR, Fisheries Modelling in R
+Version: 2.6.19.9030
+Authors@R: c( person("Iago", "Mosqueira", email = "iago.mosqueira@wur.nl", role = "cre", comment=c(c(ORCID = "0000-0002-3252-0591"))), person("Laurence
+                 T.", "Kell", email = "laurie.kell@iccat.int", role = "aut"), person("Philippe", "Grosjean", role = "aut"))
+Description: Core classes and methods for FLR, a framework for fisheries modelling and management strategy simulation in R. Developed by a team of
+                 fisheries scientists in various countries. More information can be found at <http://flr-project.org/>.
+X-schema.org-keywords: fisheries, flr, R
+License: GPL (>= 2)
+Depends: R(>= 4.0), lattice, iterators
+Imports: graphics, grid, methods, Matrix, MASS, stats, stats4, utils,
+        ggplot2
+Suggests: knitr, testthat, rlang, hedgehog
+VignetteBuilder: knitr
+URL: http://flr-project.org/FLCore
+BugReports: https://github.com/flr/FLCore/issues
+Collate: 'genericMethods.R' 'uom.R' 'spread.R' 'FLAccesors.R'
+        'classesArr.R' 'FLArray.R' 'FLQuant.R' 'FLQuantPoint.R'
+        'FLQuantDistr.R' 'FLPar.R' 'classesComp.R' 'classesLst.R'
+        'FLlst-class.R' 'FLComp.R' 'FLS.R' 'FLStock.R' 'FLStockLen.R'
+        'FLI.R' 'FLIndex.R' 'FLIndexBiomass.R' 'FLQuants.R'
+        'predictModel.R' 'FLStockR.R' 'FLBiol.R' 'FLModel.R'
+        'FLModelDeriv.R' 'FLModelSim.R' 'FLSR.R' 'operators.R'
+        'io.VPAsuite.R' 'io.FLStock.R' 'io.MFCL.R' 'io.ADMB.R'
+        'FLCohort.R' 'FLlst-methods.R' 'getPlural.R' 'io.FLIndices.R'
+        'SRmodels.R' 'coerce.R' 'PlotDiagnostics.R' 'jackknife.R'
+        'zzz.R' 'io.Adapt.R' 'io.VPA2Box.R' 'data.R' 'plot.R' 'oem.R'
+        'length.R'
+LazyLoad: Yes
+LazyData: No
+Encoding: UTF-8
+RoxygenNote: 7.2.3
+RemoteType: github
+RemoteHost: api.github.com
+RemoteRepo: FLCore
+RemoteUsername: flr
+RemoteRef: master
+RemoteSha: a6360dc3ff2e78ca7116fba941f0de201dcc7aa9
+GithubRepo: FLCore
+GithubUsername: flr
+GithubRef: master
+GithubSHA1: a6360dc3ff2e78ca7116fba941f0de201dcc7aa9
+Author: Iago Mosqueira [cre] (<https://orcid.org/0000-0002-3252-0591>),
+  Laurence T. Kell [aut],
+  Philippe Grosjean [aut]
+Maintainer: Iago Mosqueira <iago.mosqueira@wur.nl>
+Built: R 4.2.1; ; 2023-02-17 12:51:19 UTC; unix

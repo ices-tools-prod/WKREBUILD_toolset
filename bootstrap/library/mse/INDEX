@@ -1,0 +1,49 @@
+bisect                  Bisection search for a forecast target
+                        providing a given performance statistic value.
+catchSSB.hcr            A HCR to set total catch based on SSB depletion
+                        level
+computeFp05             Calculates the Fbar value giving a maximum
+                        probability of ssb being below Blim of 5%
+cpue.hcr                cpue.hcr
+db                      Creates a single table of output from an FLmse
+                        object
+debug-mse               Debugging mse modules
+effort.is               effort implementation function
+fixedC.hcr              A fixed catch HCR
+fixedF.hcr              A fixed target f
+FLiem-class             S4 class 'FLiem'
+FLmse-class             S4 class 'FLmse'
+FLoem-class             Specification for the observation error model
+                        (OEM).
+FLom                    A class for an operating model (OM)
+fwd.om                  A method to project the operating model (OM)
+grid                    Functions to create grids and lists of model
+                        and simulation runs
+ices.hcr                The typical HCR used by ICES
+index.hat,FLIndexBiomass,FLStock-method
+                        Predicted index of abundance from abundance
+                        estimates
+indicator.hcr           An indicator-based HCR
+indicator.is            indicator implementation function
+initiate                Initializes a population for a given virgin
+                        biomass.
+kobestatistics          Kobe statistics
+mcN                     Compute number of necessary Monte Carlo runs
+movingF.hcr             TODO:description
+mp                      mp executes a single run of a Management
+                        Procedure
+mpCtrl-class            S4 class 'mpCtrl'
+mseCtrl-class           S4 class 'mseCtrl'
+p4om                    FLom object for North sea plaice
+perfect.oem             A perfect observation of catch and
+                        abundances-at-age.
+perfect.sa              A perfect 'estimate' of abundances, catches and
+                        harvest.
+performance             Compute performance statistics
+sampling.oem            Samples from an operating model to obtain
+                        catch, biology and abundance data
+statistics              Example set of performance statistics
+tac.is                  TAC implementation function
+target.hcr              Target-based harvest control rule to adjust
+                        input or output from CPUE
+tune                    tune

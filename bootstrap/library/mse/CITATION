@@ -1,0 +1,13 @@
+citHeader("To cite mse in a publication, please use:")
+
+citEntry(
+  entry="Article",
+  title="The mse package",
+  author=personList(
+		person("I.", "Mosqueira"),
+		person("E.", "Jardim")),
+  journal="Joyurnal of Open Source Software",
+  year="2020",
+  volume="X",
+  pages="XX",
+  textVersion="Mosqueira, I. and Jardim, E. 2020. The mse package. JOSS, X:XX.")

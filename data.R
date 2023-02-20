@@ -1,4 +1,4 @@
-# data.R - CONDITION a simple OM
+# data.R - CONDITIONS a series of OMs
 # mseExamples/single_stock-sol.27.4/data.R
 
 # Copyright Iago MOSQUEIRA (WMR), 2021
@@ -12,6 +12,7 @@ library(FLSRTMB)
 library(AAP)
 
 source("utilities.R")
+
 
 # --- LOAD data, inputs and results of 2022 ICES WGNSSK sol.27.4 SA
 
@@ -31,7 +32,7 @@ aapcontrol <- AAP.control(pGrp=TRUE, qplat.surveys=8, qplat.Fmatrix=9,
 
 # RUN retros
 
-retros <- FLStocks(lapply(seq(2021, 2021 - 5), function(x)
+retros <- FLStocks(lapply(seq(2021, 2021 - 10), function(x)
   aap(window(stock, end=x), window(indices, end=x), control=aapcontrol) +
     window(stock, end=x)
 ))
@@ -71,17 +72,27 @@ om <- fwdWindow(om, end=fy)
 residuals(sr(om))[, ac(2022:fy)] <- exp(residuals(srr)[, sample(ac(2000:2021),
   21)])
 
+# OR constant at 0.4
+residuals(sr(om))[, ac(2022:fy)] <- rlnorm(100, rec(om) %=% 0, 0.4)
+
+# OR at individual iter SD
+residuals(sr(om))[, ac(2022:fy)] <- rlnorm(100, 0,
+  expand(sqrt(yearVars(residuals(sr(om)))), year=2022:fy))
+
+# OR with rho
+residuals(sr(om))[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
+  iter=100, meanlog=0, sdlog=0.4)
+
 # UPDATE intermediate year with Ftarget
 
 om <- fwd(om, control=fwdControl(quant='fbar', year=2022,
   value=icespts$Fmsy))
 
-
 #  --- CONSTRUCT oem
 
 oem <- FLoem(
   observations=list(stk=stock(om)),
-  deviances=list(stk=FLQuants(stock.n=retroErrorByAge(retros, stock.n(om)))),
+  deviances=list(stk=FLQuants(catch.n=retroErrorByAge(retros, stock.n(om)))),
   method=perfect.oem
 )
 

@@ -1,5 +1,5 @@
 # utilities.R - DESC
-# /home/mosquia/Active/Doing/toolset_ICES_WKREBUILD2+rebuild/WKREBUILD_toolset/utilities.R
+# WKREBUILD_toolset/utilities.R
 
 # Copyright (c) WUR, 2023.
 # Author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl>
@@ -63,4 +63,65 @@ setMethod("update", signature(object="FLStock"),
     return(res)
   }
 )
+# }}}
+
+# mps {{{
+
+mps <- function(om, oem, ctrl, args, ...) {
+
+  # GET ... arguments
+  opts <- list(...)
+
+  # DO options refer to ctrl elements?
+  if(!names(opts) %in% names(ctrl))
+    stop("options refer to modules not present in ctrl")
+
+  # EXTRACT 1st option values
+  module <- names(opts)[1]
+  modarg <- names(opts[[1]])
+  values <- opts[[module]][[modarg]]
+
+  # TODO: PARSE all options and assemble one list
+
+  res <- foreach(i = values) %dopar% {
+    args(ctrl[[module]])[[modarg]] <- i
+    tryCatch(mp(om, oem=oem, ctrl=ctrl, args=args, parallel=FALSE),
+      error=function(e) {
+        stop("")
+      })
+  }
+
+  names(res) <- paste(module, modarg, round(values), sep="_")
+
+  return(res)
+}
+# }}}
+
+# icesControl {{{
+
+icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
+  recyrs=25, dtaclow=NA, dtacupp=NA) {
+
+  # CHECK inputs
+
+  # BUILD mseCtrl
+  ctrl <- mpCtrl(list(
+
+  # shortcut.sa + SSBdevs
+  est = mseCtrl(method=shortcut.sa,
+    args=list(SSBdevs=SSBdevs)),
+
+  # hockeystick
+  hcr = mseCtrl(method=hockeystick.hcr,
+    args=list(lim=Blim, trigger=Btrigger, target=Ftarget, min=Fmin,
+    metric="ssb", output="fbar")),
+
+  # tac.is + Fdevs
+  isys = mseCtrl(method=tac.is,
+    args=list(recyrs=recyrs, fmin=Fmin, dtaclow=dtaclow, dtacupp=dtacupp,
+    Fdevs=Fdevs))
+  ))
+
+  return(ctrl)
+} 
 # }}}
