@@ -11,14 +11,18 @@ library(mse)
 
 source("utilities.R")
 
+# SETUP parallel
+
+library(doParallel)
+registerDoParallel(3)
+
 # LOAD oem and oem
 
 load('data/sol274.RData')
 
 # NOTE: Overfish om
 
-om <- fwd(om, control=fwdControl(year=2010:2022, quant="fbar", value=0.5))
-
+om <- fwd(om, control=fwdControl(year=2010:2021, quant="fbar", value=0.5))
 
 # SET intermediate year, start of runs
 
@@ -36,11 +40,7 @@ SSBdevs <- ar1rlnorm(0, dimnames(om)$year, dims(om)$iter, 0, SSBcv)
 
 # --- RUN for F=0
 
-f0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
-
-# --- RUN for F=Fmin
-
-fmin <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0.01))
+runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
 
 # --- RUN ICES adviced rule: shortcut.sa + hockeystick.hcr + tac.is
@@ -51,10 +51,10 @@ arule <- icesControl(SSBdevs, Fdevs, Btrigger=42838, Ftarget=0.207,
 plot_hockeystick.hcr(arule$hcr)
 
 system.time(
-ices <- mp(om, oem=oem, ctrl=arule, args=mseargs)
+runices <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 )
 
-plot(f0, ICESar=ices, window=FALSE)
+plot(runf0, ICES=runices, window=FALSE)
 
 
 # --- RUN with rebuild rule
@@ -63,25 +63,23 @@ rrule <- icesControl(SSBdevs, Fdevs, Btrigger=42838, Ftarget=0.207,
   Fmin=0.01, Blim=30828, recyrs=30)
 
 system.time(
-rebuild <- mp(om, oem=oem, ctrl=rrule, args=mseargs)
+runrbld <- mp(om, oem=oem, ctrl=rrule, args=mseargs)
 )
 
-plot(f0, ICESar=ices, rebuild=rbld, window=FALSE)
+plot(runf0, AR=runices, RBLD=runrbld, window=FALSE)
 
 
 # --- RUN for different slopes w/no min F
-
-library(doParallel)
-registerDoParallel(3)
 
 system.time(
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=list(lim=seq(0, 30828, length=6)))
 )
 
-plot(f0, runs, window=FALSE)
+plot(runf0, runs, window=FALSE)
 
 
 # --- SAVE
 
-save(f0, fmin, ices, rebuild, runs, file="model/runs.RData", compress="xz")
+save(runf0, runices, runrbld, runs, file="model/runs.RData", 
+  compress="xz")
