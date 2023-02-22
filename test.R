@@ -7,10 +7,6 @@
 # Distributed under the terms of the EUPL-1.2
 
 
-# TODO: mps() to PARSE multiple arguments:
-# - SINGLE vector with recycling?
-# runs <- mps(om, oem=oem, ctrl=list(AR=arule, RB=rrule), args=mseargs)
-
 # mps w/ ctrls {{{
 
 mps <- function(om, oem, ctrl, args, ...) {
@@ -178,14 +174,17 @@ irule <- mpCtrl(list(
 
 # }}}
 
+# retroError {{{
 
-# retroError
+
+# F~SSB correlation
 
 load('~/Projects/ICES/SOL.27.4/2022/wgnssk/2022_sol.27.4_assessment/model/retro.Rdata')
 
 retros <- sxval$retro
 final <- retros[[1]]
 retros <- retros[-1]
+
 library(mvtnorm)
 
 retroDevs <- function(retros, final=retros[[1]], iters=100) {
@@ -216,6 +215,83 @@ retroDevs <- function(retros, final=retros[[1]], iters=100) {
   return(samp)
 }
 
+corfb <- data.frame(retroDevs(retros, final=retros[[1]], iters=500))
+
+colnames(corfb) <- c('F', 'SSB')
+
+ggplot(corfb, aes(F, SSB)) + geom_point() +
+  xlab("F") + ylab("SSB")
+
+# AR1
+
+# https://stats.stackexchange.com/questions/71540/how-to-simulate-two-correlated-ar1-time-series
+
+n <- 100
+rho <- -0.0021
+rho1 <- 0.4
+rho2 <- 1e-4
+sigma1 <- 0.2
+sigma2 <- 0.3
+
+n <- 100
+rho <- -0.0021
+Fcv <- 0.212
+Fphi <- 0.423
+SSBcv <- 0.10
+SSBphi <- 1e-6
+
+
+library(mvtnorm)
+
+.corrErr <- function(n, rho, rho1, rho2, sigma1, sigma2) {
+
+  burnin <- n / 10
+
+  sigma11 <- sqrt(sigma1 ^ 2 * (1 - rho1 ^ 2))
+  sigma22 <- sqrt(sigma2 ^ 2 * (1 - rho2 ^ 2))
+  
+  q12 <- rho *(1 - rho1 * rho2) / sqrt((1 - rho1 ^ 2) * (1 - rho2 ^ 2))
+
+  cov <- q12 * sigma11 * sigma22
+
+  eps <- rmvnorm(n + burnin, mean=c(0, 0),
+    sigma=cbind(c(sigma11 ^ 2, cov), c(cov, sigma22 ^ 2)))
+
+  x <- arima.sim(list(ar=rho1), n, innov=eps[burnin + 1:n, 1],
+    start.innov=eps[1:burnin, 1], sd=sigma1)
+
+  y <- arima.sim(list(ar=rho2), n, innov=eps[burnin + 1:n, 2],
+    start.innov=eps[1:burnin, 2], sd=sigma2)
+
+  return(list(x=c(x), y=c(y)))
+}
+
+
+n <- 100
+rho <- -0.0021
+Fcv <- 0.212
+Fphi <- 0.423
+SSBcv <- 0.10
+SSBphi <- 1e-6
+
+
+
+des <- .corrErr(n = 100, rho = rho, rho1 = Fphi, rho2 = SSBphi,
+  sigma1 = Fcv, sigma2 = SSBphi)
+
+sd(des$x)
+sd(des$y)
+cov(des$x,des$y)
+acf(des$x, plot=FALSE)['1']
+acf(des$y, plot=FALSE)['1']
+
+
+
+des <- foo(n = 100, rho = 0.6, rho1 = 0.4, rho2 = 1e-4, sigma1 = 0.2, sigma2 = 0.3)
+
+# ---
+
+
 #
 
 hind <- FLStocks(lapply(retros, function(x) {
@@ -223,6 +299,10 @@ hind <- FLStocks(lapply(retros, function(x) {
   fwd(fwdWindow(x, end=2021), sr=rec(final), catch=catch(final)[, yrs])
   }
 ))
+
+
+
+
 
 # HINDCAST retros w/ deviances
 
@@ -268,4 +348,249 @@ hindf <- fwd(propagate(final, 100), catch=catch(final)[, ac(2016:2021)],
   sr=rec(final), deviances=devsr)
 
 plot(hindf)
+# }}}
 
+
+
+om1=herRet[[1]]
+herErr=laply(herRet, function(x){
+   yr=ac(dims(fbar(x))$maxyear)
+
+   c(f  =c(fbar(x)[,yr]/fbar(om1)[,yr]),
+     ssb=c(ssb(x)[,yr])/c(ssb(om1)[,yr]))})
+
+rmvnorm(1000,c(1,1),cov(herErr[-1,]))
+
+
+library(forecast)
+auto.arima(x)
+auto.arima(y)
+cor(x,y) ## close to rho
+sd(x)  ## close to sigma1
+sd(y) ## close to sigma 2
+
+
+# ---
+
+set.seed(123)
+calcrho<-function(rho,rho1,rho2, sigma1, sigma2) {
+  rho*(1-rho1*rho2)/sqrt((1-rho1^2)*(1-rho2^2))
+}
+burn.in<-300
+n<-5000 
+rho<-0.8
+rho1<-0.5
+rho2<-0.7
+sigma1 <- 2
+sigma11 <- sqrt(sigma1^2*(1-rho1^2))
+sigma2 <- 5
+sigma22 <- sqrt(sigma2^2*(1-rho2^2))
+q12<-calcrho(rho,rho1,rho2)
+
+library(MASS)
+mycov <- q12*sigma11*sigma22
+eps<-mvrnorm(n+burn.in,mu=c(0,0),Sigma=cbind(c(sigma11^2,mycov),c(mycov,sigma22^2)))
+cor(eps[,1], eps[,2])
+plot(1:5300, eps[,2])
+points(1:5300, eps[,1], col="red")
+
+x<-arima.sim(list(ar=rho1),n,innov=eps[burn.in+1:n,1],start.innov=eps[1:burn.in,1], sd=2)
+y<-arima.sim(list(ar=rho2),n,innov=eps[burn.in+1:n,2],start.innov=eps[1:burn.in,2], sd=5)
+library(forecast)
+auto.arima(x)
+auto.arima(y)
+cor(x,y) ## close to rho
+sd(x)  ## close to sigma1
+sd(y) ## close to sigma 2
+
+
+# ---
+
+
+
+
+
+
+set.seed(123)
+
+calcrho <- function(rho,rho1,rho2) {
+  rho * (1 - rho1 * rho2) / sqrt((1 - rho1 ^ 2) * (1 - rho2 ^ 2))
+}
+
+burn.in <- 100
+n <- 100 
+
+# cross-correlation
+rho <- 0.6
+
+# AC
+rho1 <- 0.4
+rho2 <- 0.001
+
+
+q12 <- calcrho(rho, rho1, rho2)
+
+corr <- cbind(c(1, q12), c(q12, 1))
+
+eps <- rmvnorm(n + burn.in, mean = c(1, 1), sigma = corr)
+
+x<-arima.sim(list(ar=rho1),n,innov=eps[burn.in+1:n,1],start.innov=eps[1:burn.in,1])
+y<-arima.sim(list(ar=rho2),n,innov=eps[burn.in+1:n,2],start.innov=eps[1:burn.in,2])
+cor(x,y)
+acf(x, plot=FALSE)['1']
+acf(y, plot=FALSE)['1']
+
+var(x)
+var(y)
+
+
+     arima.sim(n = 63, list(ar = c(0.8897, -0.4858), ma = c(-0.2279, 0.2488)),
+
+
+sigma1 <- 2
+sigma2 <- 5
+q12<-calcrho(rho,rho1,rho2,sigma1, sigma2)
+library(MASS)
+mycov <- q12*sigma1*sigma2
+eps<-mvrnorm(n+burn.in,mu=c(0,0),Sigma=cbi
+
+library(MASS)
+mycov <- q12*sigma1*sigma2
+eps<-mvrnorm(n+burn.in,mu=c(0,0),Sigma=cbind(c(sigma1^2,mycov),c(mycov,sigma2^2)))
+
+
+
+
+#
+
+hind <- FLStocks(lapply(retros, function(x) {
+  yrs <- ac(seq(dims(x)$maxyear + 1, 2021))
+  fwd(fwdWindow(x, end=2021), sr=rec(final), catch=catch(final)[, yrs])
+  }
+))
+
+
+
+
+
+# HINDCAST retros w/ deviances
+
+# - fwd 10 year retro w/ final biology, rec, catch
+
+back <- final
+ret <- 5
+yr <- dims(retros[[ret]])$maxyear
+stock.n(back)[, ac(1957:yr)] <- stock.n(retros[[ret]])
+
+devsr <- deviances(om)[, ac(seq(2022, length=ret))]
+dimnames(devsr) <- list(year=yr:2021)
+
+om0 <- fwd(propagate(back, 100), catch=catch(final)[, ac(yr:2021)], 
+  sr=rec(final), deviances=devsr)
+
+plot(om0)
+
+
+hinds <- lapply(setNames(nm=5:10), function(y) {
+  
+  back <- final
+  yr <- dims(retros[[y]])$maxyear
+  stock.n(back)[, ac(1957:yr)] <- stock.n(retros[[y]])
+
+  devsr <- deviances(om)[, ac(seq(2022, length=y))]
+  dimnames(devsr) <- list(year=yr:2021)
+
+  fwd(propagate(back, 100), catch=catch(final)[, ac(yr:2021)], 
+    sr=rec(final), deviances=devsr)
+  }
+)
+
+plot(FLStocks(hinds))
+
+# HINDCAST of SA run w/ rec deviances
+# - deviances correlated to rec?
+
+devsr <- deviances(om)[, ac(seq(2022, length=6))]
+dimnames(devsr) <- list(year=2016:2021)
+
+hindf <- fwd(propagate(final, 100), catch=catch(final)[, ac(2016:2021)], 
+  sr=rec(final), deviances=devsr)
+
+plot(hindf)
+# }}}
+
+
+
+om1=herRet[[1]]
+herErr=laply(herRet, function(x){
+   yr=ac(dims(fbar(x))$maxyear)
+
+   c(f  =c(fbar(x)[,yr]/fbar(om1)[,yr]),
+     ssb=c(ssb(x)[,yr])/c(ssb(om1)[,yr]))})
+
+rmvnorm(1000,c(1,1),cov(herErr[-1,]))
+
+
+# TODO: --- CONSTRUCT oem for full feedback
+
+it <- dim(om)[6]
+
+# observations: stk, idx, lens
+index.q(indices$BTS)[] <- q.hat(mcfit)$BTS
+index.q(indices$SNS)[] <- q.hat(mcfit)$SNS[1:6,]
+
+obs <- list(stk=fwdWindow(runmc, end=fy),
+    # TODO: propagate(FLlst)
+    idx=lapply(fwdWindow(indices, end=fy), propagate, it))
+
+# deviances
+devs <- list(stk=list(
+    catch.n=rlnorm(it, window(catch.n(runmc), end=fy) %=% 0, 0.15),
+    stock.n=rlnorm(1000, window(catch.n(runmc), end=fy) %=% 0,
+  expand(yearMeans(log(sqrt(iterVars(stock.n(om)[, ac(2002:2021)])))),
+  year=1957:2042))),
+  idx=lapply(obs$idx, function(x) rlnorm(it,
+    window(index.q(x), end=fy) %=% 0, 0.20))
+)
+
+# lognormal w/age-specific errors
+oem <- FLoem(observations=obs, deviances=devs, method=sampling.oem)
+
+# --- profvis
+
+library(profvis)
+
+profvis(source('model.R'))
+
+profvis(
+        mp(om, oem=oem, ctrl=arule, args=list(iy=2021, fy=2031))
+)
+
+library(bench)
+
+stk <- window(stock(om), end=2021)
+
+mark(stf(stk, end=2042))
+mark(fwdWindow(stk, end=2042))
+
+a <- stf(stk, end=2042)
+b <- fwdWindow(stk, end=2042)
+
+all.equal(a, b)
+
+x <- expand(catch.n(stk),  unit=c('F', 'M'))
+
+y <- unitMeans(x)
+
+mark(apply(x, c(1:2,4:6), mean, na.rm=TRUE))
+
+mark(unitMeans(x))
+
+mark((x[,,1,,] + x[,,2,,]) / 2)
+
+mark(rowMeans(aperm(x, c(1,2,4,5,6,3)), na.rm=TRUE, dim=5))
+
+
+
+FLQuant(c(rowMeans(aperm(x, c(1,2,4,5,6,3)), na.rm=TRUE, dim=5)),
+  dimnames=c(dimnames(x)[-3], unit='unique'))

@@ -41,62 +41,6 @@ retroErrorByAge <- function(retros, object) {
 }
 # }}}
 
-# update(FLStock, ...) {{{
-
-setMethod("update", signature(object="FLStock"),
-  function(object, ...) {
-
-    res <- callNextMethod()
-
-    slots <- names(list(...))
-
-    # RECALCULATE aggregates
-    if(!"landings" %in% slots)
-      landings(res) <- computeLandings(res)
-    if(!"discards" %in% slots)
-      discards(res) <- computeDiscards(res)
-    if(!"catch" %in% slots)
-      catch(res) <- computeCatch(res)
-    if(!"stock" %in% slots)
-      stock(res) <- computeStock(res)
-
-    return(res)
-  }
-)
-# }}}
-
-# mps {{{
-
-mps <- function(om, oem, ctrl, args, ...) {
-
-  # GET ... arguments
-  opts <- list(...)
-
-  # DO options refer to ctrl elements?
-  if(!names(opts) %in% names(ctrl))
-    stop("options refer to modules not present in ctrl")
-
-  # EXTRACT 1st option values
-  module <- names(opts)[1]
-  modarg <- names(opts[[1]])
-  values <- opts[[module]][[modarg]]
-
-  # TODO: PARSE all options and assemble one list
-
-  res <- foreach(i = values) %dopar% {
-    args(ctrl[[module]])[[modarg]] <- i
-    tryCatch(mp(om, oem=oem, ctrl=ctrl, args=args, parallel=FALSE),
-      error=function(e) {
-        stop("")
-      })
-  }
-
-  names(res) <- paste(module, modarg, round(values), sep="_")
-
-  return(res)
-}
-# }}}
-
 # icesControl {{{
 
 icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
@@ -124,4 +68,17 @@ icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
 
   return(ctrl)
 } 
+# }}}
+
+# shortcut_devs {{{
+
+shortcut_devs <- function(om, Fcv=0.212, Fphi=0.423, SSBcv=0, SSBphi=0) {
+  
+  devs <- FLQuants(
+    F=ar1rlnorm(Fphi, dimnames(om)$year, dims(om)$iter, 0, Fcv),
+    SSB=ar1rlnorm(0, dimnames(om)$year, dims(om)$iter, 0, SSBcv)
+  )
+
+  return(devs)
+}
 # }}}

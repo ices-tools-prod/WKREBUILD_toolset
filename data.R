@@ -1,5 +1,5 @@
 # data.R - CONDITIONS a series of OMs
-# mseExamples/single_stock-sol.27.4/data.R
+# WKREBUILD_toolset/data.R
 
 # Copyright Iago MOSQUEIRA (WMR), 2021
 # Author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl>
@@ -14,74 +14,67 @@ library(AAP)
 source("utilities.R")
 
 
-# --- LOAD data, inputs and results of 2022 ICES WGNSSK sol.27.4 SA
-
-load('bootstrap/data/sol274.RData')
-
-# SETUP McMC control
-aapcontrol <- AAP.control(pGrp=TRUE, qplat.surveys=8, qplat.Fmatrix=9,
-  Sage.knots=6, Fage.knots=8, Ftime.knots=28, mcmc=TRUE)
-
-# RUN McMC fit
-system.time(
-  mcfit <- aap(stock, indices, control=aapcontrol, verbose=TRUE)
-)
-
-aapcontrol <- AAP.control(pGrp=TRUE, qplat.surveys=8, qplat.Fmatrix=9,
-  Sage.knots=6, Fage.knots=8, Ftime.knots=28, mcmc=FALSE)
-
-# RUN retros
-
-retros <- FLStocks(lapply(seq(2021, 2021 - 10), function(x)
-  aap(window(stock, end=x), window(indices, end=x), control=aapcontrol) +
-    window(stock, end=x)
-))
-
-# SAVE
-save(mcfit, retros, file="data/mcfit.RData", compress="xz")
-
-
-# --- SETUP om & oem
-
-load('data/mcfit.RData')
+# - args
 
 # FINAL year
 fy <- 2042
 
-# ASSEMBLE McMC FLStock
-runmc <- iter(stock + mcfit, seq(100))
 
-# - FIT SRR
+# - LOAD AAP SA McMC results and retros, 2022 ICES WGNSSK sol.27.4
+
+load('bootstrap/data/sol274.RData')
+
+
+# - FIT SRRs
 
 # segreg
-srr <- fmle(as.FLSR(runmc, model="segreg"), fixed=list(b=icespts$Blim))
+sgrg <- fmle(as.FLSR(stock, model="segreg"), fixed=list(b=icespts$Blim))
 
 # bevholt
-srr <- as.FLSR(runmc, model="bevholtSV")
-srr <- Reduce(combine, lapply(seq(dims(srr)$iter), function(i)
-  srrTMB(iter(srr, i), spr0=spr0y(stock))))
+beho <- as.FLSR(stock, model="bevholtSV")
+behos <- lapply(seq(dims(beho)$iter), function(i)
+  srrTMB(iter(beho, i), spr0=spr0y(iter(stock, i))))
+
+# TODO: COMBINE SRRs
+
+c(AIC(sgrg))
+unlist(lapply(behos, AIC))
+
+library(msy)
+
+FIT <- eqsr_fit(iter(stock, 1),
+  nsamp = 0,
+  models = c("Bevholt", "Segreg"))
+
+# ---/
+
+srr <- sgrg
 
 # - CONSTRUCT om
-om <- FLom(stock=runmc, refpts=icespts, sr=srr,
+
+om <- FLom(stock=stock, refpts=icespts, sr=srr,
   projection=mseCtrl(method=fwd.om))
 
 # SETUP om future
+
 om <- fwdWindow(om, end=fy)
+
+# TODO: 
 
 # SET future om deviances: RESAMPLE last 21 years of residuals
 residuals(sr(om))[, ac(2022:fy)] <- exp(residuals(srr)[, sample(ac(2000:2021),
   21)])
 
 # OR constant at 0.4
-residuals(sr(om))[, ac(2022:fy)] <- rlnorm(100, rec(om) %=% 0, 0.4)
+residuals(sr(om))[, ac(2022:fy)] <- rlnorm(500, rec(om) %=% 0, 0.4)
 
 # OR at individual iter SD
-residuals(sr(om))[, ac(2022:fy)] <- rlnorm(100, 0,
+deviances(om)[, ac(2022:fy)] <- rlnorm(500, 0,
   expand(sqrt(yearVars(residuals(sr(om)))), year=2022:fy))
 
 # OR with rho
-residuals(sr(om))[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
-  iter=100, meanlog=0, sdlog=0.4)
+deviances(om)[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
+  iter=500, meanlog=0, sdlog=0.4)
 
 # UPDATE intermediate year with Ftarget
 
@@ -96,36 +89,14 @@ oem <- FLoem(
   method=perfect.oem
 )
 
-# --- CONSTRUCT SA deviances
 
-sadevs <- FLQuants(stock.n=retroErrorByAge(retros, stock.n(om)))
+# NOTE: Overfish om
+
+deviances(om)[, ac(1958:2021)] <- exp(deviances(om)[, ac(1958:2021)])
+
+om <- fwd(om, control=fwdControl(year=2010:2022, quant="fbar", value=0.65),
+  deviances=deviances(om))
 
 # SAVE
 
-save(om, oem, icespts, file="data/sol274.RData", compress="xz")
-
-
-# --- CONSTRUCT oem for full feedback
-
-it <- dim(om)[6]
-
-# observations: stk, idx, lens
-index.q(indices$BTS)[] <- q.hat(mcfit)$BTS
-index.q(indices$SNS)[] <- q.hat(mcfit)$SNS[1:6,]
-
-obs <- list(stk=fwdWindow(runmc, end=fy),
-    # TODO: propagate(FLlst)
-    idx=lapply(fwdWindow(indices, end=fy), propagate, it))
-
-# deviances
-devs <- list(stk=list(
-    catch.n=rlnorm(it, window(catch.n(runmc), end=fy) %=% 0, 0.15),
-    stock.n=rlnorm(1000, window(catch.n(runmc), end=fy) %=% 0,
-  expand(yearMeans(log(sqrt(iterVars(stock.n(om)[, ac(2002:2021)])))),
-  year=1957:2042))),
-  idx=lapply(obs$idx, function(x) rlnorm(it,
-    window(index.q(x), end=fy) %=% 0, 0.20))
-)
-
-# lognormal w/age-specific errors
-oem <- FLoem(observations=obs, deviances=devs, method=sampling.oem)
+save(om, oem, file="data/sol274.RData", compress="xz")

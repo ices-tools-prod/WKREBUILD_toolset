@@ -6,8 +6,16 @@
 #
 # Distributed under the terms of the EUPL-1.2
 
-# XX {{{
-# }}}
+
+library(mseviz)
+
+
+# PLOT HCRs
+
+# PLOT RUNS
+
+# PLOT
+
 
 plot_hockeystick.hcr(arule$hcr,
   labels=c(trigger="Btrigger", target="Ftarget")) +
@@ -16,6 +24,10 @@ plot_hockeystick.hcr(arule$hcr,
 plot_hockeystick.hcr(rrule$hcr,
   labels=c(trigger="Btrigger", target="Ftarget")) +
   xlab("SSB") + ylab(expression(bar(F)))
+
+
+
+
 
 
 # --- PDF

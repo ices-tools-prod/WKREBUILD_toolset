@@ -1,5 +1,5 @@
 # model.R - Running mse with NS sol.27.40
-# FLom/model.R
+# WKREBUILD_toolset/model.R
 
 # Copyright Iago MOSQUEIRA (WMR), 2021
 # Author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl>
@@ -20,66 +20,43 @@ registerDoParallel(3)
 
 load('data/sol274.RData')
 
-# NOTE: Overfish om
-
-om <- fwd(om, control=fwdControl(year=2010:2021, quant="fbar", value=0.5))
-
 # SET intermediate year, start of runs
 
 mseargs <- list(iy=2022)
 
 # F and SSB deviances
 
-Fcv <- 0.212
-Fphi <- 0.423
-Fdevs <- ar1rlnorm(Fphi, dimnames(om)$year, dims(om)$iter, 0, Fcv)
+sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423)
 
-SSBcv <- 0.10
-SSBdevs <- ar1rlnorm(0, dimnames(om)$year, dims(om)$iter, 0, SSBcv)
-
-
-# --- RUN for F=0
+# - RUN for F=0
 
 runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
+# SETUP ICES advice rule
 
-# --- RUN ICES adviced rule: shortcut.sa + hockeystick.hcr + tac.is
+arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
+  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
 
-arule <- icesControl(SSBdevs, Fdevs, Btrigger=42838, Ftarget=0.207,
-  Fmin=0.01, Blim=0, recyrs=30)
-
-plot_hockeystick.hcr(arule$hcr)
+# - RUN ICES advice rule, 4 min over 3 cores
 
 system.time(
-runices <- mp(om, oem=oem, ctrl=arule, args=mseargs)
+run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 )
 
-plot(runf0, ICES=runices, window=FALSE)
+# - RUN ICES advice rule for different slopes
 
-
-# --- RUN with rebuild rule
-
-rrule <- icesControl(SSBdevs, Fdevs, Btrigger=42838, Ftarget=0.207,
-  Fmin=0.01, Blim=30828, recyrs=30)
-
-system.time(
-runrbld <- mp(om, oem=oem, ctrl=rrule, args=mseargs)
-)
-
-plot(runf0, AR=runices, RBLD=runrbld, window=FALSE)
-
-
-# --- RUN for different slopes w/no min F
-
-system.time(
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=list(lim=seq(0, 30828, length=6)))
-)
+
+# OR with different slopes and min Fs
+
+runs_minfs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
+  hcr=list(lim=seq(0, 30828, length=6), min=seq(0, 0.05, length=6)))
+
+# PLOT
 
 plot(runf0, runs, window=FALSE)
 
+# - SAVE
 
-# --- SAVE
-
-save(runf0, runices, runrbld, runs, file="model/runs.RData", 
-  compress="xz")
+save(runf0, runs, file="model/runs.RData", compress="xz")
