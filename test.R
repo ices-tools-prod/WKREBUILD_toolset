@@ -635,6 +635,7 @@ profvis(
 
 library(bench)
 
+
 stk <- window(stock(om), end=2021)
 
 mark(stf(stk, end=2042))

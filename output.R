@@ -49,7 +49,7 @@ stats <- list(
     desc="ICES Risk 2, probability that spawner biomass is above Blim once")
 )
 
-# COMPUTE yearly permformance statistics
+# COMPUTE yearly performance statistics
 
 perf_byear <- performance(runs, statistics=stats, years=2023:2041)
 
