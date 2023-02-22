@@ -6,6 +6,73 @@
 #
 # Distributed under the terms of the EUPL-1.2
 
+# summaries {{{
+
+load("model/runs.RData")
+
+# WHAT to output by run?
+
+# - metrics
+metrics(runs[[1]])
+
+# - refpts
+refpts(runs[[1]])
+
+# CREATE single FLQuants for metrics by run
+
+# on unit
+
+y <- lapply(runs, metrics)
+z <- Reduce(ubind, lapply(y, '[[', 1))
+dimnames(z)$unit <- names(y)
+su <- FLQuants(lapply(setNames(nm=names(y[[1]])), function(i) {
+  res <- Reduce(ubind, lapply(y, '[[', i))
+  dimnames(res)$unit <- names(y)
+  res}))
+
+# on quant
+
+z <- Reduce(qbind, lapply(y, '[[', 1))
+quant(z) <- 'mp'
+dimnames(z)$mp <- names(y)
+
+mpsu <- FLQuants(lapply(setNames(nm=names(y[[1]])), function(i) {
+  res <- Reduce(qbind, lapply(y, '[[', i))
+  quant(res) <- 'mp'
+  dimnames(res)$mp <- names(y)
+  res}))
+
+# DIFF in size
+
+(an(object.size(mpsu)) / an(object.size(runs))) * 100
+
+# OPERATE on refpts
+
+mpsu$F %/% expand(as(refpts(om), 'FLQuant'), year=2022:2041)$Fmsy
+
+
+omsu <- window(metrics(om), end=args(runs[[1]])$iy)
+
+plot(omsu$F, mpsu$F[1,])
+
+# divide for performance
+
+divide(mpsu[[1]], 1)
+
+# TODO: divide(mpsu, 1)
+
+# tracking
+
+# controls diffs
+
+# summ
+
+# CONVERT to data.table?
+
+
+# }}}
+
+
 
 # mps w/ ctrls {{{
 

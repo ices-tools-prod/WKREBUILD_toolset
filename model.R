@@ -7,14 +7,19 @@
 # Distributed under the terms of the EUPL-1.2
 
 
-library(mse)
+library(icesTAF)
+
+taf.library(FLCore)
+taf.library(FLFishery)
+taf.library(FLasher)
+taf.library(mse)
 
 source("utilities.R")
 
 # SETUP parallel
 
 library(doParallel)
-registerDoParallel(3)
+registerDoParallel(2)
 
 # LOAD oem and oem
 
@@ -43,20 +48,18 @@ system.time(
 run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 )
 
-# - RUN ICES advice rule for different slopes
+# - RUN ICES advice rule for different slopes (AR_Steep)
 
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(lim=seq(0, 30828, length=6)))
+  hcr=list(lim=seq(0, 30828, length=5)))
 
-# OR with different slopes and min Fs
+# OR with different slopes and min Fs (AR_Steep + F below Blim)
 
 runs_minfs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(lim=seq(0, 30828, length=6), min=seq(0, 0.05, length=6)))
-
-# PLOT
-
-plot(runf0, runs, window=FALSE)
+  hcr=list(lim=30828, min=seq(0, 0.10, length=5)))
 
 # - SAVE
 
-save(runf0, runs, file="model/runs.RData", compress="xz")
+save(runf0, file="model/runf0.RData", compress="xz")
+save(runs, file="model/runs.RData", compress="xz")
+save(runs_minfs, file="model/runsminfs.RData", compress="xz")

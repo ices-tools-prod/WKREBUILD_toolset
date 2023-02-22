@@ -11,15 +11,21 @@
 
 library(mse)
 
-load("model/runs.RData")
+# LOAD model.R outputs
 
-# CHECK metrics and refpts
+load("model/runf0.RData")
+load("model/runs.RData")
+load("model/runsminfs.RData")
+
+# BUG: CHECK metrics and refpts
 
 # "SB" "C"  "F"
 names(metrics(runs[[1]]))
 
 # "Btrigger" "Fmsy" "Blim" "Bpa" "Flim" "Fpa" "lFmsy" "uFmsy" "F05" "F05noAR"
 dimnames(refpts(runs[[1]]))$params
+
+# ---/
 
 # DEFINE performance statistics
 
@@ -43,9 +49,12 @@ stats <- list(
     desc="ICES Risk 2, probability that spawner biomass is above Blim once")
 )
 
-# COMPOUTE yearly permformance statistics
+# COMPUTE yearly permformance statistics
 
 perf_byear <- performance(runs, statistics=stats, years=2023:2041)
+
+performance(metrics(runs[[1]]), refpts=refpts(runs[[1]]),
+  statistics=stats, years=2023:2041)
 
 # First year where P(B>Blim) > 95% by MP
 

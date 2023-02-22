@@ -13,6 +13,10 @@ library(mseviz)
 # PLOT HCRs
 
 # PLOT RUNS
+# PLOT
+
+plot(runf0, runs, window=FALSE)
+
 
 # PLOT
 

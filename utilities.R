@@ -43,8 +43,56 @@ retroErrorByAge <- function(retros, object) {
 
 # icesControl {{{
 
+#' Creates an `mpCtrl` object for the standard ICES MP evaluation
+#'
+#' This function simplifies the construction of the control object necessary to
+#' run the ICES advice rule, either in its standard form and for rebuilding
+#' management plans. It returns an object of class `mpCtrl` containing three
+#' modules: stock assessment (*sa*), harvest control rule (*hcr*) and
+#' implementation system (*isys*).
+#'
+#' An stock assessment shortcut is invoked which obtains an observation of SSB
+#' from the `FLStock` object returned by the `oem` step. Deviances in this
+#' 'estimate' of abundance (`SSBdevs`) are added as a multiplicative error.
+#' 
+#' ICES advice rule, as implementated by function `hockeystick.hcr`, is setup
+#' with the provided operational points: *Btrigger*, *Blim*, *Ftarget* and 
+#' *Fmin*. The advice rule uses and input the SSB indicator provided by the
+#' `shortcut.sa` module, and return a proposal for a fishing mortality (*fbar*)
+#' to be applied in the first management year.
+#'
+#' A short-term forecast (STF) is the carried out to establish stock status at 
+#' the end of the intermediate year, if management lag is one year or greater.
+#' In  this case, the stock provided by the estimation step is projected by
+#' applying on the current year ('ay') a fishing mortality equal to that
+#' estimated in the previous year ('Fsq', or F status quo), and then for the
+#' fishing mortality returned by the 'hcr' step on the first advice year. The 
+#' resulting catch is output as TAC proposal for the next management year.
+#'
+#' Recruitment in the STF projection is assumed to be equal to a geometric mean
+#' of those estimated in the past, with the last two years not included by
+#' default. The `recyrs` argument can take various forms. A single positive 
+#' value (e.g. `recyrs=30`) indicates how many years from the last are used in 
+#' the calculation. A vector of length two is used to set the number of years
+#' and how of them at the end of the series to exclude. So `recyrs=c(40, 2))`
+#' will compute the mean over the last 40 years but exclude the last two. To use
+#' the full time series but exclude a number of values at the end, a negative
+#' number can be used, e.g. `recyrs=-2`.
+#'
+#' @param SSBdevs
+#' @param Fdevs
+#' @param Btrigger
+#' @param Blim
+#' @param Ftarget
+#' @param Fmin
+#' @param recyrs Specifies years to be used for geomnetric mean recruitment calculation applied in the short-term forecast. See **Details** for syntax.
+#' @param dtaclow
+#' @param dtacupp
+#' @seealso mse::hockeystick.hcr, mse::tac.is, mse::shortcut.sa
+
+
 icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
-  recyrs=25, dtaclow=NA, dtacupp=NA) {
+  recyrs=-2, dtaclow=NA, dtacupp=NA) {
 
   # CHECK inputs
 
