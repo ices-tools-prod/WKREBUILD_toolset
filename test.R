@@ -662,3 +662,22 @@ mark(rowMeans(aperm(x, c(1,2,4,5,6,3)), na.rm=TRUE, dim=5))
 
 FLQuant(c(rowMeans(aperm(x, c(1,2,4,5,6,3)), na.rm=TRUE, dim=5)),
   dimnames=c(dimnames(x)[-3], unit='unique'))
+o# bevholt
+beho <- as.FLSR(stock, model="bevholtSV")
+behos <- lapply(seq(dims(beho)$iter), function(i)
+  srrTMB(iter(beho, i), spr0=spr0y(iter(stock, i))))
+
+# TODO: COMBINE SRRs
+
+c(AIC(sgrg))
+unlist(lapply(behos, AIC))
+
+library(msy)
+
+FIT <- eqsr_fit(iter(stock, 1),
+  nsamp = 0,
+  models = c("Bevholt", "Segreg"))
+
+# ---/
+
+

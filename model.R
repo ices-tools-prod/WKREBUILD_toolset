@@ -7,12 +7,7 @@
 # Distributed under the terms of the EUPL-1.2
 
 
-library(icesTAF)
-
-taf.library(FLCore)
-taf.library(FLFishery)
-taf.library(FLasher)
-taf.library(mse)
+library(mse)
 
 source("utilities.R")
 

@@ -9,8 +9,15 @@
 
 # retroErrorByAge {{{
 
-retroErrorByAge <- function(retros, object) {
+#' @param retros
+#' @param object
 
+retroErrorByAge(retros, stock.n(om))
+
+names(retroErrorByAge(retros, stock.n(om)))
+
+retroErrorByAge <- function(retros, object) {
+browser()
   # GET dims
   nret <- length(retros) - 1
   fy <- dims(retros[[1]])$maxyear
@@ -85,11 +92,10 @@ retroErrorByAge <- function(retros, object) {
 #' @param Blim
 #' @param Ftarget
 #' @param Fmin
-#' @param recyrs Specifies years to be used for geomnetric mean recruitment calculation applied in the short-term forecast. See **Details** for syntax.
+#' @param recyrs Specifies years to be used for geometric mean recruitment calculation applied in the short-term forecast. See **Details** for syntax.
 #' @param dtaclow
 #' @param dtacupp
 #' @seealso mse::hockeystick.hcr, mse::tac.is, mse::shortcut.sa
-
 
 icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
   recyrs=-2, dtaclow=NA, dtacupp=NA) {
@@ -129,4 +135,13 @@ shortcut_devs <- function(om, Fcv=0.212, Fphi=0.423, SSBcv=0, SSBphi=0) {
 
   return(devs)
 }
+# }}}
+
+# icesmetrics {{{
+icesmetrics <- list(
+  FMSY=function(x) unitSums(fbar(x)) %/% refpts(x)$Fmsy,
+  SBMSY=function(x) unitSums(ssb(x)) %/% refpts(x)$Btrigger,
+  SBPA=function(x) unitSums(ssb(x)) %/% refpts(x)$Bpa,
+  SBlim=function(x) unitSums(ssb(x)) %/% refpts(x)$Blim
+)
 # }}}

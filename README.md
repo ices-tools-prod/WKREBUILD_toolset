@@ -2,7 +2,6 @@
 
 FLR-based tools for evaluating recovery plans in ICES.
 
-
 ## Distribution
 
 A github template repository based on this example will be available to be applied when creating a new TAF repository.
@@ -69,3 +68,5 @@ The analysis shown here uses an operating model based on the 2022 WGNSSK stock a
 ## References
 
 - [How to create a github template repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository)
+
+- <https://stats.stackexchange.com/questions/71540/how-to-simulate-two-correlated-ar1-time-series>
