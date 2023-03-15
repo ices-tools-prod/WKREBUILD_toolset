@@ -8,6 +8,8 @@
 
 # TODO: USE names in years list, e.g. list(short=2000:2005, long=2000:2030)
 
+library(icesTAF)
+mkdir("output")
 
 library(mse)
 

@@ -6,15 +6,20 @@
 #
 # Distributed under the terms of the EUPL-1.2
 
+library(icesTAF)
+mkdir("model")
 
 library(mse)
 
 source("utilities.R")
 
-# SETUP parallel
-
+# - SETUP parallel
 library(doParallel)
-registerDoParallel(2)
+
+# Linux
+registerDoParallel(3)
+
+# Windows
 
 # LOAD oem and oem
 

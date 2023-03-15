@@ -7,5 +7,14 @@
 # Distributed under the terms of the EUPL-1.2
 
 
-install.deps(repos=structure(c(CRAN="https://cloud.r-project.org/",
+library(icesTAF)
+
+# INSTALL from binary packages in r-universe
+
+install.packages(c("FLCore", "FLasher", "mse", "FLSRTMB", "AAP"),
+  repos=structure(c(CRAN="https://cloud.r-project.org/",
   FLR="https://flr.r-universe.dev")))
+
+# OR from source via github
+
+taf.bootstrap()

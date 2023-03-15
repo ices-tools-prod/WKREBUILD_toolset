@@ -7,6 +7,9 @@
 # Distributed under the terms of the EUPL-1.2
 
 
+library(icesTAF)
+mkdir("data")
+
 library(mse)
 library(FLSRTMB)
 library(AAP)
@@ -25,24 +28,28 @@ load('bootstrap/data/sol274.RData')
 # - FIT SRRs
 
 # segreg
-sgrg <- fmle(as.FLSR(stock, model="segreg"), fixed=list(b=icespts$Blim))
+init <- segreg()$initial(rec(stock), ssb(stock))$a
+
+sgrg <- fmle(as.FLSR(stock, model="segreg"), fixed=list(b=icespts$Blim),
+  method="Brent", lower=init / 10, upper= init * 10)
 
 srr <- sgrg
 
+# TODO: FIT multiple models and combine
+
 # - CONSTRUCT om
 
-om <- FLom(stock=stock, refpts=icespts, sr=srr,
+om <- FLom(stock=stock, refpts=icespts, sr=srr, 
   projection=mseCtrl(method=fwd.om))
 
 # SETUP om future
 
 om <- fwdWindow(om, end=fy)
 
-
 # SET future om deviances ...
 
 # AS constant at 0.4
-residuals(sr(om))[, ac(2022:fy)] <- rlnorm(500, rec(om) %=% 0, 0.4)
+deviances(om)[, ac(2022:fy)] <- rlnorm(500, rec(om)[, ac(2022:fy)] %=% 0, 0.4)
 
 # OR at individual iter SD
 deviances(om)[, ac(2022:fy)] <- rlnorm(500, 0,
@@ -58,12 +65,13 @@ om <- fwd(om, control=fwdControl(quant='fbar', year=2022,
   value=icespts$Fmsy))
 
 # NOTE: Overfishing om for recovery
+
 deviances(om)[, ac(1958:2021)] <- exp(deviances(om)[, ac(1958:2021)])
+
 om <- fwd(om, control=fwdControl(year=2010:2022, quant="fbar", value=0.65),
   deviances=deviances(om))
 
-
-#  --- CONSTRUCT oem
+#  - CONSTRUCT oem
 
 oem <- FLoem(
   observations=list(stk=stock(om)),
@@ -71,6 +79,6 @@ oem <- FLoem(
   method=perfect.oem
 )
 
-# SAVE
+# - SAVE
 
 save(om, oem, file="data/sol274.RData", compress="xz")
