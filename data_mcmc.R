@@ -28,14 +28,17 @@ it <- 50
 
 load('bootstrap/data/sol274.RData')
 
-# - FIT SRRs
+# FIT w/McMC
 
-msf <- eqsr_fit(stock,
-  nsamp = 0,
-  models = c("Ricker", "Segreg", "Bevholt"))
+runmc <- aap(stock, indices, control)
+
+stock <- iter(stock + runmc, seq(it))
+
+# - FIT SRRs
 
 # segreg
 init <- segreg()$initial(rec(stock), ssb(stock))$a
+
 sgrg <- fmle(as.FLSR(stock, model="segreg"), fixed=list(b=icespts$Blim),
   method="Brent", lower=init / 10, upper= init * 10)
 

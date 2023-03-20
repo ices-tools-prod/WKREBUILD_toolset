@@ -24,7 +24,7 @@ load("model/runsminfs.RData")
 
 # DEFINE performance statistics
 
-icesstats <- list(
+stats <- list(
 
   # P(SB>SBlim)
   PBlim=list(~iterMeans((SB/Blim) > 1), name="P(SB>SB[lim])",

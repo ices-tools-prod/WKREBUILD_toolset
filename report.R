@@ -105,3 +105,7 @@ ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
   geom_line(linewidth=2) +
   geom_point(size=4, colour="white") + geom_point(size=3)
 )
+
+# RENDER
+
+rmarkdown::render("report/report.Rmd")
