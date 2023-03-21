@@ -1,0 +1,232 @@
+---
+title: "DRAFT stock recovery analysis: WKREBUILD toolset"
+author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: tint::tintHtml
+license: Creative Commons Attribution-ShareAlike 4.0 International Public License
+---
+
+```{r setup, include = FALSE}
+library(knitr)
+opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width="92%"
+)
+```
+
+# Installation
+
+The code has required a number of extensions and modifications of code in various FLR packages. The simples way to install the required versions is to make use of the FLR R-universe repository, using the following command
+
+```{r, eval=FALSE}
+
+install.packages(c("FLCore", "FLasher", "ggplotFL", "mse", "mseviz"),
+  repos=c(CRAN="https://cloud.r-project.org/",
+  FLR="https://flr.r-universe.dev"))
+
+```
+
+# Operating model conditioning ([data.R](https://github.com/iagomosqueira/WKREBUILD_toolset/blob/main/data.R))
+
+- An OM based on the 2022 AAP stock assessment for sol.27.4 was used for development. The model has been run using ADMB's McMC routine to obtain some variability in population abundance and fishing mortality, solely due to parameter uncertainty.
+
+- The OM was then subjected to a period of high fishing mortality ($\bar{F} = 0.5$) to bring the stock to levels significantly lower than $Blim$
+
+```{r om_metrics, echo=FALSE}
+include_graphics("om_metrics.png")
+```
+
+- A stock-recruitment relationship was fitted to all OM iterations. At the moment a segmented-regression SRR, with inflexion point fixed at $Blim$, was used, but work is ongoing to be able to combine SRRs with different functional forms.
+
+```{r, eval=FALSE}
+sgrg <- fmle(as.FLSR(stock, model="segreg"), fixed=list(b=icespts$Blim))
+```
+
+- The OM is then extended until 2045 by assuming that both biology and selectivity will remain the same as specified by the average of the last 3 years
+
+```{r eval=FALSE}
+om <- fwdWindow(om, end=fy)
+```
+
+- Future recruitment deviances have been set as following an autocorrelated lognormal distribution, with $rho=0.4$
+
+```{r, eval=FALSE}
+deviances(om)[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
+  iter=500, meanlog=0, sdlog=0.4)
+```
+
+- An Observation Error Model is then set that contains past stock observations and adds future deviances in observations. In this case, lognormal errors in catch.n, with $sd=0.2$ were added.
+
+```{r, eval=FALSE}
+oem <- FLoem(
+  observations=list(stk=stock(om)),
+  deviances=list(stk=FLQuants(catch.n=rlnorm(500, catch.n(om) %=% 0, 0.2))),
+  method=perfect.oem
+)
+```
+
+# Evaluation of recovery rules ([model.R](https://github.com/iagomosqueira/WKREBUILD_toolset/blob/main/model.R))
+
+- A simple evaluation of possible setups for a recovery rule can now be carried out. The MPs, as implemented in the 'mse' package, consist of three elements:
+
+1. An estimation method ('est'): a shortcut module substitutes the stock assessment method, with added deviances in the estimate of stock status (SSBdevs).
+
+2. A Harvest Control Rule ('hcr'): a hockeystick HCR with four variables (limit, minimum, target and trigger) is set up, using SSB as input and F as output.
+
+3. An implementation system ('isys'): this step implements the short-term forecast used to convert the target F into a TAC value to be used on the advice year. The method sets future biology and selectivity to match the recent (3 years) averages, computes past observed recruitment to obtain a geometric mean to apply in the projection, adds deviances to the fishing mortalities applied to the stock, and carries out the forecast to obtain the corresponding catch level. The intermediate year assumption is that of fishing mortality being equal to the last observed year, but the alternative assumption of catch equal to the set TAC could be added.
+
+- The three steps are specified in a control structure, as follows:
+
+```{r, eval=FALSE}
+rule <- mpCtrl(list(
+  # shortcut.sa + SSBdevs
+  est = mseCtrl(method=shortcut.sa,
+    args=list(SSBdevs=SSBdevs)),
+  # hockeystick as ICES
+  hcr = mseCtrl(method=hockeystick.hcr,
+    args=list(lim=0, trigger=c(icespts$Btrigger), target=c(icespts$Fmsy), min=0,
+    metric="ssb", output="fbar")),
+  #
+  isys = mseCtrl(method=tac.is,
+    args=list(recyrs=30, fmin=0, Fdevs=Fdevs))
+))
+```
+
+- For this specific application, a function is available that simplifies the process and uses standard ICES assumptions and names. For example the call below creates a control structure that implements the standard ICES advice rule using the operational points currently in use for sol.27.4, and some devainces in SSB and F previously constructed. The function is instructed to use all all recruitment estimates but the last two (`recyrs=-2`), in the forecast.
+
+```{r, eval=FALSE}
+sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423)
+
+arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
+  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
+```
+
+- A plot of a particular hockeystick HCR can be obtained with an specific function
+
+```{r, echo=FALSE}
+arule <- icesControl(SSBdevs=sdevs$F, Fdevs=sdevs$SSB,
+  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
+```
+
+```{r}
+plot_hockeystick.hcr(arule$hcr, labels=c(trigger="MSYBtrigger", limit="",
+  min="", target="Ftarget")) + xlab("SSB") + ylab("F")
+```
+
+- Applying the MP specified by such a control structure requires a call to the 'mp' function with the OM, OEM and control objects. Only one extra argument is required, the starting year of the simulation ('iy'). By default the simulation will run to the last year of the 'om' object, and on an annual basis.
+
+```{r, eval=FALSE}
+run <- mp(om, oem=oem, ctrl=arule, args=list(iy=2021))
+```
+
+- This example takes approximately 2.5 minutes running on a single core machine, and could be parallelised so that iterations are split among available cores.
+
+- A set of runs is then conducted in which the standard advice rule is modified in various ways. First, a range of values are explored for the 'lim' argument: the level of the input metric (SSB in this case) at which the output (F) is set to the 'min' value. Size values between 0 and the value of Blim for sol.27.4 were chosen.
+
+```{r runs_hcrs, echo=FALSE}
+include_graphics("runs_hcrs.png")
+```
+
+- To run these alternative MPs, the 'mps' function takes the same arguments as a call for a single MP, but also a list of alternative values for a HCR argument
+
+```{r, eval=FALSE}
+runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
+  hcr=list(lim=seq(0, 30828, length=5)))
+```
+
+- If a parallel backend is available, as setup using any of those that work with the 'foreach' package, each scenario will be run on separate cores or nodes. The example above, executed over 5 cores on a laptop computer, took 3 minutes to finalise.
+
+- To obtain a base line to evaluate the performance of these recovery MPs, a single forecast of the OM was carried out in which fishing is stopped, and recovery proceeds as quickly as possible
+
+```{r, eval=FALSE}
+runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
+```
+
+- We can now compare the 5 MPs with the expected stock development if fishing was to stop (OM in the plot).
+
+```{r runs, echo=FALSE}
+include_graphics("runs.png")
+```
+
+- A similar exercise was carried out with MPs in which the HCR also changed in the level at which fishing mortality will flatten as the stock declines, i.e. the minimum F is not 0.
+
+```{r runs_minfs_hcrs, echo=FALSE}
+include_graphics("runs_minfs_hcrs.png")
+```
+
+- The results are again compared with a zero fishing projection, but another one in which F is kept at some level, for example due to mixed fisheries catches, could be used instead. A simple call to 'fwd' with a 'fbar' target would provide that.
+
+```{r runs_minfs, echo=FALSE}
+include_graphics("runs_minfs.png")
+```
+
+- The 'hockeystick.hcr' function is able to accommodate a large number of HCR shapes, but only if they can be specified using the four arguments listed above. Rules in which two target levels are chosen according to stock status, would require a new function, which would take little time to get ready if required.
+
+- Other options or manners in which the short-term forecast is conducted, could also be incorporated to the 'tac.isys' function.
+
+# Computing performance and generating outputs (output.R)
+
+- The performance of alternative MPs is evaluated by specifying a series of performance statistics. Four example statistics have been defined:
+
+  - PBlim: Probability of SSB is above Blim.
+  - C: Mean catch.
+  - AVVC: Average annual variability in catch.
+  - risk: ICES Risk 2, probability that spawner biomass is above Blim once
+
+- Performance statistics are defined as a list containing a formula to compute it, a name, and a description. Formulas can make use or existing or new functions. Additional statistics can be easily formulated following these examples. Elements in the formula must refer to aither fefrenec points in the 'erfpts' slot of the OM, e.g. 'Blim', or to metrics defined in the call to 'performance()'. For example, `C=catch`.
+
+```{r, eval=FALSE}
+icesstats <- list(
+
+  # P(SB>SBlim)
+  PBlim=list(~iterMeans((SB/Blim) > 1), name="P(SB>SB[lim])",
+    desc="Probability that spawner biomass is above Blim"),
+
+  # mean(C)
+  C=list(~yearMeans(C), name="mean(C)",
+    desc="Mean catch over years"),
+
+  # AVVC
+  AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
+    name="AAV(C)", desc="Average annual variability in catch"),
+
+  # P(SB < SBlim) at least once
+  risk2=list(~yearMeans(iterMeans(((SB/Blim) < 1) > 0)),
+    name="once(P(SB<B[limit]))",
+    desc="ICES Risk 2, probability that spawner biomass is above Blim once")
+)
+```
+
+- The 'performance' function computes the specified statistics making use of the specified metrics and reference points. A set of metrics is defined by default for OM objects: SB for ssb, F for fbar and C for catch. The time period over which performance is to be computed is also specified. This can be either individual years or a period of them over which to compute a mean or median
+
+```{r, eval=FALSE}
+
+# COMPUTE yearly performance statistics
+perf_byear <- performance(runs, statistics=stats[-3], years=2023:2041)
+
+# COMPUTE final performance statistics (2023-2041)
+perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
+```
+
+# Report on results (report.R)
+
+- A number of plot functions are available for displaying the results of the MP runs. For example, plots of the time series
+
+- The 'mseviz' package provides a set of plot functions that attempt to compare the performance of alternative MPs on some chosen. For example boxplots of each performance metric by MP
+
+```{r perf_bps, echo=FALSE}
+include_graphics("perf_bps.png")
+```
+
+- Also of trade-offs of a statistics, typically catch, against others
+
+```{r perf_tos, echo=FALSE}
+include_graphics("perf_tos.png")
+```
+
+# Final notes
+
+- A number of functions are currently defined in the `utilities.R` file. any function of general application will be incorporated into any of the FLKR packages being used. ICES-specific functions should be integrated into an MSE-related package, or on any of the existing ICEs R package, if suitable.
+
+- Once an agreed and streamlined code base is ready, it will be made available as a template github repository, so new users can strat from an existing documented example.
