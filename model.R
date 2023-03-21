@@ -32,7 +32,6 @@ load('data/sol274.RData')
 mseargs <- list(iy=2022)
 
 # F and SSB deviances
-# TODO: GENERATE correlated devs
 
 sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
@@ -46,9 +45,6 @@ arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
   Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
 
 # TODO: SETTINGS STF
-# recyrs: last 25 - 2
-
-plot_hockeystick.hcr(arule$hcr)
 
 # - RUN ICES advice rule, 4 min over 3 cores
 

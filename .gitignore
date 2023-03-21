@@ -1,3 +1,4 @@
 bootstrap/library/*
 test
 test.R
+test_*.R

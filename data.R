@@ -12,7 +12,6 @@ mkdir("data")
 
 library(mse)
 library(FLSRTMB)
-library(AAP)
 
 source("utilities.R")
 
@@ -22,7 +21,7 @@ source("utilities.R")
 fy <- 2042
 
 # NUMBER iterations
-it <- 50
+it <- 500
 
 # - LOAD AAP SA McMC results and retros, 2022 ICES WGNSSK sol.27.4
 
@@ -30,13 +29,9 @@ load('bootstrap/data/sol274.RData')
 
 # - FIT SRRs
 
-msf <- eqsr_fit(stock,
-  nsamp = 0,
-  models = c("Ricker", "Segreg", "Bevholt"))
-
 # segreg
-init <- segreg()$initial(rec(stock), ssb(stock))$a
-sgrg <- fmle(as.FLSR(stock, model="segreg"), fixed=list(b=icespts$Blim),
+init <- segreg()$initial(rec(run), ssb(run))$a
+sgrg <- fmle(as.FLSR(run, model="segreg"), fixed=list(b=icespts$Blim),
   method="Brent", lower=init / 10, upper= init * 10)
 
 srr <- sgrg
@@ -45,12 +40,12 @@ srr <- sgrg
 
 # - CONSTRUCT om
 
-om <- FLom(stock=stock, refpts=icespts, sr=srr, 
+om <- FLom(stock=run, refpts=icespts, sr=srr, 
   projection=mseCtrl(method=fwd.om))
 
 # SETUP om future
 
-om <- fwdWindow(om, end=fy)
+om <- propagate(fwdWindow(om, end=fy), it)
 
 # SET future om deviances ...
 
