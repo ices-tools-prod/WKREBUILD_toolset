@@ -44,8 +44,6 @@ runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
   Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
 
-# TODO: SETTINGS STF
-
 # - RUN ICES advice rule, 4 min over 3 cores
 
 system.time(

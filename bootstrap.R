@@ -11,10 +11,6 @@ library(icesTAF)
 
 # INSTALL from binary packages in r-universe
 
-install.packages(c("FLCore", "FLasher", "mse", "FLSRTMB", "AAP"),
+install.packages(c("FLCore", "FLFishery", "FLasher", "mse", "FLSRTMB"),
   repos=structure(c(CRAN="https://cloud.r-project.org/",
   FLR="https://flr.r-universe.dev")))
-
-# OR from source via github
-
-taf.bootstrap()

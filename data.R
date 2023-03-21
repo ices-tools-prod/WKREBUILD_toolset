@@ -31,7 +31,7 @@ load('bootstrap/data/sol274.RData')
 
 # segreg
 init <- segreg()$initial(rec(run), ssb(run))$a
-sgrg <- fmle(as.FLSR(run, model="segreg"), fixed=list(b=icespts$Blim),
+sgrg <- fmle(as.FLSR(run, model="segreg"), fixed=list(b=refpts$Blim),
   method="Brent", lower=init / 10, upper= init * 10)
 
 srr <- sgrg
@@ -40,7 +40,7 @@ srr <- sgrg
 
 # - CONSTRUCT om
 
-om <- FLom(stock=run, refpts=icespts, sr=srr, 
+om <- FLom(stock=run, refpts=refpts, sr=srr, 
   projection=mseCtrl(method=fwd.om))
 
 # SETUP om future
@@ -63,14 +63,16 @@ deviances(om)[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
 # UPDATE intermediate year with Ftarget
 
 om <- fwd(om,
-  control=fwdControl(quant='fbar', year=2022, value=icespts$Fmsy))
+  control=fwdControl(quant='fbar', year=2022, value=refpts$Fmsy))
 
-# NOTE: Overfishing om for recovery
+# NOTE: Overfishing om for recovery ---\
 
 deviances(om)[, ac(1958:2021)] <- exp(deviances(om)[, ac(1958:2021)])
 
 om <- fwd(om, control=fwdControl(year=2010:2022, quant="fbar", value=0.65),
   deviances=deviances(om))
+
+# ---/
 
 #  - CONSTRUCT oem
 
