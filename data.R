@@ -27,16 +27,22 @@ it <- 500
 
 load('bootstrap/data/sol274.RData')
 
-# - FIT SRRs
+# - SRRs
 
-# segreg
-init <- segreg()$initial(rec(run), ssb(run))$a
-sgrg <- fmle(as.FLSR(run, model="segreg"), fixed=list(b=refpts$Blim),
-  method="Brent", lower=init / 10, upper= init * 10)
+# FIT 3 models
 
-srr <- sgrg
+srrs <- FLSRs(lapply(setNames(list(bevholtSV, rickerSV, segreg),
+  nm=c("bevholt","ricker","segreg")), function(x)
+  srrTMB(as.FLSR(run, model=x), spr0=yearMeans(spr0y(run))))
+)
 
-# TODO: FIT multiple models and combine
+# TODO: CALCULATE weighting
+
+# COMBINE into a single object
+prs <- Reduce(combine, lapply(seq(3), function(x)
+  rbind(propagate(params(srrs[[x]]), 200), FLPar(m=rep(x, 200)))))
+
+srr <- as.FLSR(run, model=mixedsrr()$model, params=iter(prs, seq(500)))
 
 # - CONSTRUCT om
 
@@ -49,14 +55,14 @@ om <- propagate(fwdWindow(om, end=fy), it)
 
 # SET future om deviances ...
 
-# AS constant at 0.4
+# 1. AS constant at 0.4
 deviances(om)[, ac(2022:fy)] <- rlnorm(it, rec(om)[, ac(2022:fy)] %=% 0, 0.4)
 
-# OR at individual iter SD
+# 2. OR at individual iter SD
 deviances(om)[, ac(2022:fy)] <- rlnorm(it, 0,
   expand(sqrt(yearVars(residuals(sr(om)))), year=2022:fy))
 
-# OR with rho
+# 3. OR with rho
 deviances(om)[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
   iter=it, meanlog=0, sdlog=0.4)
 

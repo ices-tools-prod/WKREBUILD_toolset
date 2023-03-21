@@ -70,3 +70,18 @@ The analysis shown here uses an operating model based on the 2022 WGNSSK stock a
 - [How to create a github template repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository)
 
 - <https://stats.stackexchange.com/questions/71540/how-to-simulate-two-correlated-ar1-time-series>
+
+
+# TODO
+
+- GENERATE correlated F ~ SSB devs
+- COMPUTE weights/probabilities of alternative SRRs
+- COMBINE SRRs
+  - fwd(FLStock, FLSRs) BUT om@FLSR
+  - combine(a, b, model, ssb)
+    - CODE model in R
+    - ADD to FLasher
+- CHECK tac.is options for STF
+
+
+

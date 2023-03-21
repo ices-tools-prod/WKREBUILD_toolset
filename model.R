@@ -17,11 +17,13 @@ source("utilities.R")
 library(doParallel)
 
 # Linux
-registerDoParallel(3)
-
+if(os.linux()) {
+  registerDoParallel(detectCores() - 2)
 # Windows
-cl <- makeCluster(3)
-registerDoParallel(cl)
+} else {
+  cl <- makeCluster(detectCores() - 2)
+  registerDoParallel(cl)
+}
 
 # LOAD oem and oem
 
@@ -39,6 +41,8 @@ sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
+save(runf0, file="model/runf0.RData", compress="xz")
+
 # SETUP ICES advice rule
 
 arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
@@ -55,14 +59,12 @@ run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=list(lim=seq(0, 30828, length=5)))
 
+save(runs, file="model/runs.RData", compress="xz")
+
 # OR with different slopes and min Fs (AR_Steep + F below Blim)
 
 runs_minfs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=list(lim=seq(0, 30828, length=5), min=seq(0, 0.10, length=5)))
 
-# - SAVE
-
-save(runf0, file="model/runf0.RData", compress="xz")
-save(runs, file="model/runs.RData", compress="xz")
 save(runs_minfs, file="model/runsminfs.RData", compress="xz")
 
