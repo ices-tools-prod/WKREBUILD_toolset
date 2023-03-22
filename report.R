@@ -9,6 +9,9 @@
 library(icesTAF)
 mkdir("report")
 
+library(mseviz)
+
+source("utilities.R")
 
 # --- OM (data.R)
 

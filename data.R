@@ -55,6 +55,9 @@ om <- propagate(fwdWindow(om, end=fy), it)
 
 # SET future om deviances ...
 
+# TODO: SET deviances(om, start=2022) <- foo()
+# TODO: UNIFY rlnorm & ar1rlnorm interfaces
+
 # 1. AS constant at 0.4
 deviances(om)[, ac(2022:fy)] <- rlnorm(it, rec(om)[, ac(2022:fy)] %=% 0, 0.4)
 
