@@ -84,4 +84,13 @@ The analysis shown here uses an operating model based on the 2022 WGNSSK stock a
 - CHECK tac.is options for STF
 
 
-
+```mermaid
+sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>John: Hello John, how are you?
+    Note right of John: Rational thoughts <br/>prevail!
+    John-->>Alice: Great!
+    John->>Bob: How about you?
+    Bob-->>John: Jolly good!
+```
