@@ -27,6 +27,8 @@ it <- 500
 
 load('bootstrap/data/sol274.RData')
 
+# TODO: DEAL with multiple iters (bootstrap, McMC)
+
 # - SRRs
 
 # FIT 3 models
@@ -93,4 +95,4 @@ oem <- FLoem(
 
 # - SAVE
 
-save(om, oem, file="data/sol274.RData", compress="xz")
+save(om, oem, file="data/data.RData", compress="xz")

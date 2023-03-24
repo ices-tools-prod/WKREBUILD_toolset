@@ -9,13 +9,14 @@
 library(icesTAF)
 mkdir("report")
 
+library(mse)
 library(mseviz)
 
 source("utilities.R")
 
 # --- OM (data.R)
 
-load('data/sol274.RData')
+load('data/data.RData')
 
 # OM
 pubpng("report/om_metrics.png",
@@ -32,9 +33,9 @@ plot(window(om, end=2021), metrics=icesmetrics) +
 
 # --- MPs (model.R)
 
-load("model/runf0.RData")
-load("model/runs.RData")
-load("model/runsminfs.RData")
+load("model/model_runf0.RData")
+load("model/model_runs.RData")
+load("model/model_runsminfs.RData")
 
 # BASELINE run: F=0
 pubpng("report/run_f0.png",
@@ -75,7 +76,7 @@ Reduce('+', lapply(names(runs_minfs), function(x)
 
 # --- Performance (output.R)
 
-load("output/performance.RData")
+load("output/output.RData")
 
 # PLOT long term performance
 

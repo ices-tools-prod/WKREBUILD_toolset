@@ -27,21 +27,20 @@ if(os.linux()) {
 
 # LOAD oem and oem
 
-load('data/sol274.RData')
+load('data/data.RData')
 
 # SET intermediate year, start of runs
 
 mseargs <- list(iy=2022)
 
 # F and SSB deviances
-
 sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 # - RUN for F=0
 
 runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
-save(runf0, file="model/runf0.RData", compress="xz")
+save(runf0, file="model/model_runf0.RData", compress="xz")
 
 # SETUP ICES advice rule
 
@@ -59,12 +58,12 @@ run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=list(lim=seq(0, 30828, length=5)))
 
-save(runs, file="model/runs.RData", compress="xz")
+save(runs, file="model/model_runs.RData", compress="xz")
 
 # OR with different slopes and min Fs (AR_Steep + F below Blim)
 
 runs_minfs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=list(lim=seq(0, 30828, length=5), min=seq(0, 0.10, length=5)))
 
-save(runs_minfs, file="model/runsminfs.RData", compress="xz")
+save(runs_minfs, file="model/model_runsminfs.RData", compress="xz")
 

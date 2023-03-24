@@ -15,9 +15,9 @@ library(mse)
 
 # LOAD model.R outputs
 
-load("model/runf0.RData")
-load("model/runs.RData")
-load("model/runsminfs.RData")
+load("model/model_runf0.RData")
+load("model/model_runs.RData")
+load("model/model_runsminfs.RData")
 
 
 # ---/
@@ -57,4 +57,4 @@ perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
 
 # SAVE
 
-save(perf_byear, perf_end, perf_f0, file="output/performance.RData")
+save(perf_byear, perf_end, perf_f0, file="output/output.RData")
