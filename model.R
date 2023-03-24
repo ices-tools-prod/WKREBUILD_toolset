@@ -56,14 +56,13 @@ run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 # - RUN ICES advice rule for different slopes (AR_Steep)
 
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(lim=seq(0, 30828, length=5)))
+  hcr=list(lim=seq(0, refpts(om)$Blim, length=5)))
 
 save(runs, file="model/model_runs.RData", compress="xz")
 
 # OR with different slopes and min Fs (AR_Steep + F below Blim)
 
 runs_minfs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(lim=seq(0, 30828, length=5), min=seq(0, 0.10, length=5)))
+  hcr=list(lim=seq(0, refpts(om)$Blim, length=5), min=seq(0, 0.10, length=5)))
 
 save(runs_minfs, file="model/model_runsminfs.RData", compress="xz")
-
