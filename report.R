@@ -11,6 +11,7 @@ mkdir("report")
 
 library(mse)
 library(mseviz)
+library(patchwork)
 
 source("utilities.R")
 
