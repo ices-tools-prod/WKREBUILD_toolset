@@ -137,3 +137,11 @@ retroErrorByAge <- function(retros, object) {
   return(out)
 }
 # }}}
+
+# include_graphics {{{
+include_graphics <- function(path, ...) {
+  if(!grepl("/", path) && !grepl("report$", getwd()) && dir.exists("report"))
+    path <- file.path("report", path)
+  knitr::include_graphics(path, ...)
+}
+# }}}

@@ -105,10 +105,10 @@ dat <- perf_byear[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
 
 pubpng("report/perf_pblim_mp.png",
 ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
-  geom_line(linewidth=2) +
+  geom_line(linewidth=1) +
   geom_point(size=4, colour="white") + geom_point(size=3)
 )
 
 # RENDER
 
-rmarkdown::render("report/report.Rmd")
+rmarkdown::render("report.Rmd", output_dir="report")
