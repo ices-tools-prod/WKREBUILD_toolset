@@ -149,18 +149,6 @@ runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 include_graphics("runs.png")
 ```
 
-- A similar exercise was carried out with MPs in which the HCR also changed in the level at which fishing mortality will flatten as the stock declines, i.e. the minimum F is not 0.
-
-```{r runs_minfs_hcrs, echo=FALSE}
-include_graphics("runs_minfs_hcrs.png")
-```
-
-- The results are again compared with a zero fishing projection, but another one in which F is kept at some level, for example due to mixed fisheries catches, could be used instead. A simple call to 'fwd' with a 'fbar' target would provide that.
-
-```{r runs_minfs, echo=FALSE}
-include_graphics("runs_minfs.png")
-```
-
 - The 'hockeystick.hcr' function is able to accommodate a large number of HCR shapes, but only if they can be specified using the four arguments listed above. Rules in which two target levels are chosen according to stock status, would require a new function, which would take little time to get ready if required.
 
 - Other options or manners in which the short-term forecast is conducted, could also be incorporated to the 'tac.isys' function.
@@ -227,6 +215,6 @@ include_graphics("perf_tos.png")
 
 # Final notes
 
-- A number of functions are currently defined in the `utilities.R` file. any function of general application will be incorporated into any of the FLKR packages being used. ICES-specific functions should be integrated into an MSE-related package, or on any of the existing ICEs R package, if suitable.
+- A number of functions are currently defined in the `utilities.R` file. any function of general application will be incorporated into any of the FLR packages being used. ICES-specific functions should be integrated into an MSE-related package, or on any of the existing ICEs R package, if suitable.
 
 - Once an agreed and streamlined code base is ready, it will be made available as a template github repository, so new users can strat from an existing documented example.
