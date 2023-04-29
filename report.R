@@ -17,7 +17,7 @@ source("utilities.R")
 
 # --- OM (data.R)
 
-load('data/data.RData')
+load('data/data.rda')
 
 # OM
 pubpng("report/om_metrics.png",
@@ -34,9 +34,8 @@ plot(window(om, end=2021), metrics=icesmetrics) +
 
 # --- MPs (model.R)
 
-load("model/model_runf0.RData")
-load("model/model_runs.RData")
-load("model/model_runsminfs.RData")
+load("model/model_runf0.rda")
+load("model/model_runs.rda")
 
 # BASELINE run: F=0
 pubpng("report/run_f0.png",
@@ -59,25 +58,10 @@ Reduce('+', lapply(names(runs), function(x)
   ggtitle(x)))
 )
 
-# PLOT RUNS minfs
-
-pubpng("report/runs_minfs.png",
-plot(runf0, runs_minfs, window=FALSE) +
-  geom_vline(xintercept=2023, linetype=3)
-)
-
-pubpng("report/runs_minfs_hcrs.png",
-Reduce('+', lapply(names(runs_minfs), function(x)
-  plot_hockeystick.hcr(control(runs_minfs[[x]])$hcr,
-  labels=c(trigger="Btrigger", target="Ftarget")) +
-  xlab("SSB") + ylab(expression(bar(F))) +
-  ggtitle(x)))
-)
-
 
 # --- Performance (output.R)
 
-load("output/output.RData")
+load("output/output.rda")
 
 # PLOT long term performance
 

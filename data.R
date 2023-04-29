@@ -25,7 +25,7 @@ it <- 500
 
 # - LOAD AAP SA McMC results and retros, 2022 ICES WGNSSK sol.27.4
 
-load('bootstrap/data/sol274.RData')
+load('bootstrap/data/sol274.rda')
 
 # TODO: DEAL with multiple iters (bootstrap, McMC)
 
@@ -48,8 +48,7 @@ srr <- as.FLSR(run, model=mixedsrr()$model, params=iter(prs, seq(500)))
 
 # - CONSTRUCT om
 
-om <- FLom(stock=run, refpts=refpts, sr=srr, 
-  projection=mseCtrl(method=fwd.om))
+om <- FLom(stock=run, refpts=refpts, sr=srr, projection=mseCtrl(method=fwd.om))
 
 # SETUP om future
 
@@ -95,4 +94,4 @@ oem <- FLoem(
 
 # - SAVE
 
-save(om, oem, file="data/data.RData", compress="xz")
+save(om, oem, file="data/data.rda", compress="xz")

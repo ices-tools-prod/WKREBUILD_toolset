@@ -8,6 +8,7 @@
 
 # TODO: USE names in years list, e.g. list(short=2000:2005, long=2000:2030)
 
+
 library(icesTAF)
 mkdir("output")
 
@@ -15,9 +16,8 @@ library(mse)
 
 # LOAD model.R outputs
 
-load("model/model_runf0.RData")
-load("model/model_runs.RData")
-load("model/model_runsminfs.RData")
+load("model/model_runf0.rda")
+load("model/model_runs.rda")
 
 
 # ---/
@@ -57,4 +57,15 @@ perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
 
 # SAVE
 
-save(perf_byear, perf_end, perf_f0, file="output/output.RData")
+save(perf_byear, perf_end, perf_f0, file="output/output.rda")
+
+
+# First year in which P(SB>Blim) > 0.99 by 'mp'
+
+perf_byear[statistic == 'PBlim', .(data=mean(data)), by=.(mp, year)][data > 0.95, .(year=min(year)), by=mp]
+
+ggplot(perf_byear[statistic == 'PBlim', .(data=mean(data)), by=.(mp, year)],
+  aes(x=year, y=data, colour=mp)) + geom_point()
+
+# recoveryStats <- function(perf, statistic, value)
+

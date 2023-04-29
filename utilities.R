@@ -145,3 +145,21 @@ include_graphics <- function(path, ...) {
   knitr::include_graphics(path, ...)
 }
 # }}}
+
+# combinations {{{
+
+combinations <- function(...) {
+
+  #
+  args <- list(...)
+
+  # 
+  combs <- as.list(do.call(expand.grid, args))
+
+  # DELETE attributes and RENAME
+  attributes(combs) <- NULL
+  names(combs) <- names(args)
+
+  return(combs)
+}
+# }}}

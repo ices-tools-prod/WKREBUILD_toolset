@@ -27,7 +27,7 @@ if(os.linux()) {
 
 # LOAD oem and oem
 
-load('data/data.RData')
+load('data/data.rda')
 
 # SET intermediate year, start of runs
 
@@ -40,7 +40,7 @@ sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
-save(runf0, file="model/model_runf0.RData", compress="xz")
+save(runf0, file="model/model_runf0.rda", compress="xz")
 
 # SETUP ICES advice rule
 
@@ -53,16 +53,10 @@ system.time(
 run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 )
 
-# - RUN ICES advice rule for different slopes (AR_Steep)
+# - RUN ICES advice rule varying slopes and min Fs (AR_Steep + F below Blim)
 
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(lim=seq(0, refpts(om)$Blim, length=5)))
+  hcr=combinations(lim=seq(0, c(refpts(om)$Blim), length=5),
+    min=seq(0, 0.10, length=3)))
 
-save(runs, file="model/model_runs.RData", compress="xz")
-
-# OR with different slopes and min Fs (AR_Steep + F below Blim)
-
-runs_minfs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(lim=seq(0, refpts(om)$Blim, length=5), min=seq(0, 0.10, length=5)))
-
-save(runs_minfs, file="model/model_runsminfs.RData", compress="xz")
+save(runs, file="model/model_runs.rda", compress="xz")
