@@ -1,4 +1,10 @@
+bootstrap/data/*
 bootstrap/library/*
+bootstrap/software/*
+data/*
+model/*
+output/*
+report/*
 test
 test.R
 test_*.R

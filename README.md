@@ -2,6 +2,13 @@
 
 FLR-based tools for evaluating recovery plans in ICES.
 
+- Quickstart
+  - Use github template
+  - Install packages
+  - Provide inputs
+- 
+
+
 ## Distribution
 
 A github template repository based on this example will be available to be applied when creating a new TAF repository.
@@ -84,13 +91,26 @@ The analysis shown here uses an operating model based on the 2022 WGNSSK stock a
 - CHECK tac.is options for STF
 
 
-```mermaid
-sequenceDiagram
-    participant Alice
-    participant Bob
-    Alice->>John: Hello John, how are you?
-    Note right of John: Rational thoughts <br/>prevail!
-    John-->>Alice: Great!
-    John->>Bob: How about you?
-    Bob-->>John: Jolly good!
+```
+|-- bootstrap
+|   |-- initial
+|   |   |-- data
+|   |   |   |-- cod2722.rda
+|   |   |   |-- hom272a.rda
+|   |   |   |-- sol274.rda
+|   |   |   `-- wbss.rda
+|   |   `-- data.R
+|   |-- DATA.bib
+|   `-- SOFTWARE.bib
+|-- bootstrap.R
+|-- data/
+|-- data.R
+|-- model/
+|-- model.R
+|-- output/
+|-- output.R
+|-- report/
+|-- report.R
+|-- report.Rmd
+`-- utilities.R
 ```
