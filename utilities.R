@@ -152,7 +152,7 @@ combinations <- function(...) {
 
   #
   args <- list(...)
-
+  
   # 
   combs <- as.list(do.call(expand.grid, args))
 
@@ -163,3 +163,4 @@ combinations <- function(...) {
   return(combs)
 }
 # }}}
+

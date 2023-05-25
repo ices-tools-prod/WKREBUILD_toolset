@@ -6,6 +6,7 @@
 #
 # Distributed under the terms of the EUPL-1.2
 
+
 library(icesTAF)
 mkdir("model")
 
@@ -14,6 +15,7 @@ library(mse)
 source("utilities.R")
 
 # - SETUP parallel
+
 library(doParallel)
 
 # Linux
@@ -24,6 +26,23 @@ if(os.linux()) {
   cl <- makeCluster(detectCores() - 2)
   registerDoParallel(cl)
 }
+
+# or future
+
+library(doFuture)
+registerDoFuture()
+library(progressr)
+handlers(global = TRUE)
+handlers("progress")
+
+# Linux
+if(os.linux()) {
+  plan(multicore, workers=availableCores() - 2)
+# Windows
+} else {
+  plan(multisession, workers=availableCores() - 4)
+}
+
 
 # LOAD oem and oem
 
@@ -42,21 +61,35 @@ runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
 save(runf0, file="model/model_runf0.rda", compress="xz")
 
-# SETUP ICES advice rule
+# SETUP standard ICES advice rule
+
+# using icesControl
 
 arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
   Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
 
-# - RUN ICES advice rule, 4 min over 3 cores
+# or step by step
 
-system.time(
-run <- mp(om, oem=oem, ctrl=arule, args=mseargs)
-)
+arule <- mpCtrl(list(
+
+  # shortcut.sa + SSBdevs
+  est = mseCtrl(method=shortcut.sa,
+    args=list(SSBdevs=sdevs$SSB)),
+
+  # hockeystick
+  hcr = mseCtrl(method=hockeystick.hcr,
+    args=list(lim=0, trigger=42838, target=0.207, min=0,
+    metric="ssb", output="fbar")),
+
+  # tac.is + Fdevs
+  isys = mseCtrl(method=tac.is,
+    args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
+  ))
 
 # - RUN ICES advice rule varying slopes and min Fs (AR_Steep + F below Blim)
 
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=combinations(lim=seq(0, c(refpts(om)$Blim), length=5),
-    min=seq(0, 0.10, length=3)))
+  hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger), length=5),
+    min=seq(0, 0.10, length=5)))
 
-save(runs, file="model/model_runs.rda", compress="xz")
+ave(runs, file="model/model_runs.rda", compress="xz")
