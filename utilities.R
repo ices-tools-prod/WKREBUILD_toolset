@@ -104,6 +104,34 @@ icesmetrics <- list(
 )
 # }}}
 
+# stats {{{
+
+stats <- list(
+
+  # P(SB>SBlim)
+  PBlim=list(~iterMeans((SB/Blim) > 1), name="P(SB>SB[lim])",
+    desc="Probability that spawner biomass is above Blim"),
+
+  # P(SB>SBtrigger)
+  PBtrigger=list(~iterMeans((SB/Btrigger) > 1), name="P(SB>B[trigger])",
+    desc="Probability that spawner biomass is above Btrigger"),
+
+  # mean(C)
+  C=list(~yearMeans(C), name="mean(C)",
+    desc="Mean catch over years"),
+
+  # AVVC
+  AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
+    name="AAV(C)", desc="Average annual variability in catch"),
+
+  # P(SB < SBlim) at least once
+  risk2=list(~yearMeans(iterMeans(((SB/Blim) < 1) > 0)),
+    name="once(P(SB<B[limit]))",
+    desc="ICES Risk 2, probability that spawner biomass is above Blim once")
+)
+
+# }}}
+
 # retroErrorByAge {{{
 
 retroErrorByAge <- function(retros, object) {
@@ -150,10 +178,10 @@ include_graphics <- function(path, ...) {
 
 combinations <- function(...) {
 
-  #
+  # GET all inputs
   args <- list(...)
   
-  # 
+  # GENERATE all combinations
   combs <- as.list(do.call(expand.grid, args))
 
   # DELETE attributes and RENAME
@@ -163,4 +191,3 @@ combinations <- function(...) {
   return(combs)
 }
 # }}}
-

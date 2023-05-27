@@ -16,33 +16,7 @@ library(mse)
 
 # LOAD model.R outputs
 
-load("model/model_runf0.rda")
 load("model/model_runs.rda")
-
-
-# ---/
-
-# DEFINE performance statistics
-
-stats <- list(
-
-  # P(SB>SBlim)
-  PBlim=list(~iterMeans((SB/Blim) > 1), name="P(SB>SB[lim])",
-    desc="Probability that spawner biomass is above Blim"),
-
-  # mean(C)
-  C=list(~yearMeans(C), name="mean(C)",
-    desc="Mean catch over years"),
-
-  # AVVC
-  AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
-    name="AAV(C)", desc="Average annual variability in catch"),
-
-  # P(SB < SBlim) at least once
-  risk2=list(~yearMeans(iterMeans(((SB/Blim) < 1) > 0)),
-    name="once(P(SB<B[limit]))",
-    desc="ICES Risk 2, probability that spawner biomass is above Blim once")
-)
 
 # COMP base line performance
 perf_f0 <- performance(runf0, statistics=stats, years=2023:2041)
@@ -58,14 +32,3 @@ perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
 # SAVE
 
 save(perf_byear, perf_end, perf_f0, file="output/output.rda")
-
-
-# First year in which P(SB>Blim) > 0.99 by 'mp'
-
-perf_byear[statistic == 'PBlim', .(data=mean(data)), by=.(mp, year)][data > 0.95, .(year=min(year)), by=mp]
-
-ggplot(perf_byear[statistic == 'PBlim', .(data=mean(data)), by=.(mp, year)],
-  aes(x=year, y=data, colour=mp)) + geom_point()
-
-# recoveryStats <- function(perf, statistic, value)
-

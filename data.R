@@ -27,8 +27,6 @@ it <- 500
 
 load('bootstrap/data/sol274.rda')
 
-# TODO: DEAL with multiple iters (bootstrap, McMC)
-
 # - SRRs
 
 # FIT 3 models
@@ -46,48 +44,38 @@ prs <- Reduce(combine, lapply(seq(3), function(x)
 
 srr <- as.FLSR(run, model=mixedsrr()$model, params=iter(prs, seq(500)))
 
+# UPDATE intermediate year with Ftarget
+# TODO: NEED 2023 for rec in om, FIX fwd()
+
+run <- fwd(fwdWindow(run, end=2023),
+  sr=expand(yearMeans(rec(run)), year=2022:2023), 
+  control=fwdControl(quant='fbar', year=2022:2023, value=refpts$Fmsy))
+
 # - CONSTRUCT om
 
-om <- FLom(stock=run, refpts=refpts, sr=srr, projection=mseCtrl(method=fwd.om))
+om <- FLom(stock=run, refpts=refpts, sr=srr)
 
 # SETUP om future
 
 om <- propagate(fwdWindow(om, end=fy), it)
 
-# SET future om deviances ...
-
+# SET SR deviances
 # TODO: SET deviances(om, start=2022) <- foo()
-# TODO: UNIFY rlnorm & ar1rlnorm interfaces
 
-# 1. AS constant at 0.4
-deviances(om)[, ac(2022:fy)] <- rlnorm(it, rec(om)[, ac(2022:fy)] %=% 0, 0.4)
+deviances(om)[, ac(2012:fy)] <- ar1rlnorm(rho=0.04, years=2012:fy,
+  iter=it, meanlog=0, sdlog=0.2)
 
-# 2. OR at individual iter SD
-deviances(om)[, ac(2022:fy)] <- rlnorm(it, 0,
-  expand(sqrt(yearVars(residuals(sr(om)))), year=2022:fy))
+# RUN hindcast w/deviances
+# NOTE: Overfishing om for recovery
 
-# 3. OR with rho
-deviances(om)[, ac(2022:fy)] <- ar1rlnorm(rho=0.04, years=2022:fy,
-  iter=it, meanlog=0, sdlog=0.4)
-
-# UPDATE intermediate year with Ftarget
-
-om <- fwd(om,
-  control=fwdControl(quant='fbar', year=2022, value=refpts$Fmsy))
-
-# NOTE: Overfishing om for recovery ---\
-
-deviances(om)[, ac(1958:2021)] <- exp(deviances(om)[, ac(1958:2021)])
-
-om <- fwd(om, control=fwdControl(year=2010:2022, quant="fbar", value=0.65),
-  deviances=deviances(om))
-
-# ---/
+om <- fwd(om, sr=rec(run)[, ac(2012:2023)] * 0.3,
+  control=as(FLQuants(fbar=fbar(run)[, ac(2012:2022)] * 3), 'fwdControl'))
 
 #  - CONSTRUCT oem
+# TODO: SIMPLIFY deviances, FLoem(om, deviances=list())
 
 oem <- FLoem(
-  observations=list(stk=stock(om)),
+  observations=list(stk=fwdWindow(run, end=fy)),
   deviances=list(stk=FLQuants(catch.n=rlnorm(it, catch.n(om) %=% 0, 0.2))),
   method=perfect.oem
 )

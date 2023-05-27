@@ -15,15 +15,16 @@ library(mse)
 source("utilities.R")
 
 # - SETUP parallel
+# NOTE: 4 cores for 32 Gb RAM
 
 library(doParallel)
 
 # Linux
 if(os.linux()) {
-  registerDoParallel(detectCores() - 2)
+  registerDoParallel(4)
 # Windows
 } else {
-  cl <- makeCluster(detectCores() - 2)
+  cl <- makeCluster(4)
   registerDoParallel(cl)
 }
 
@@ -37,12 +38,11 @@ handlers("progress")
 
 # Linux
 if(os.linux()) {
-  plan(multicore, workers=availableCores() - 2)
+  plan(multicore, workers=4)
 # Windows
 } else {
-  plan(multisession, workers=availableCores() - 4)
+  plan(multisession, workers=4)
 }
-
 
 # LOAD oem and oem
 
@@ -53,13 +53,12 @@ load('data/data.rda')
 mseargs <- list(iy=2022)
 
 # F and SSB deviances
+
 sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 # - RUN for F=0
 
 runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
-
-save(runf0, file="model/model_runf0.rda", compress="xz")
 
 # SETUP standard ICES advice rule
 
@@ -90,6 +89,8 @@ arule <- mpCtrl(list(
 
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger), length=5),
-    min=seq(0, 0.10, length=5)))
+    min=seq(0, 0.10, length=3)))
 
-ave(runs, file="model/model_runs.rda", compress="xz")
+# SAVE
+
+save(runf0, runs, file="model/model_runs.rda", compress="xz")

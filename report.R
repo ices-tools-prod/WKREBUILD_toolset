@@ -83,16 +83,32 @@ perf_f0[statistic == "PBlim" & data > 0.95, .SD[1]]
 
 perf_byear[statistic == "PBlim" & data > 0.95, .SD[1], by=mp]
 
+# First year where P(B>Btrigger) > 50% by MP
+
+perf_byear[statistic == "PBtrigger" & data > 0.50, .SD[1], by=mp]
+
 # PLOT PBlim by year and mp
 
 dat <- perf_byear[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
 
 pubpng("report/perf_pblim_mp.png",
 ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
-  geom_line(linewidth=1) +
-  geom_point(size=4, colour="white") + geom_point(size=3)
+  geom_line(linewidth=0.5) +
+  geom_point(size=4, colour="white") + geom_point(size=2) +
+  geom_hline(yintercept=0.95, linetype=2)
 )
 
-# RENDER
+# PLOT PBtrigger by year and mp
+
+dat <- perf_byear[statistic == "PBtrigger", .(PBtrigger=mean(data)), by=.(mp, year)]
+
+pubpng("report/perf_pbtrigger_mp.png",
+ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
+  geom_line(linewidth=0.5) +
+  geom_point(size=4, colour="white") + geom_point(size=2) +
+  geom_hline(yintercept=0.50, linetype=2)
+)
+
+# RENDER report.Rmd
 
 rmarkdown::render("report.Rmd", output_dir="report")
