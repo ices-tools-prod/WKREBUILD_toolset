@@ -18,17 +18,17 @@ library(mse)
 
 load("model/model_runs.rda")
 
-# COMP base line performance
-perf_f0 <- performance(runf0, statistics=stats, years=2023:2041)
+# ADD F=0 run
+runs$F0 <- FLmse(om=runf0)
 
 # COMPUTE yearly performance statistics
 
-perf_byear <- performance(runs, statistics=stats[-3], years=2023:2041)
+perf_year <- performance(runs, statistics=annualstats, years=2023:2041)
 
-# COMPUTE final performance statistics (2023-2041)
+# COMPUTE final performance statistics (2035-2041)
 
 perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
 
 # SAVE
 
-save(perf_byear, perf_end, perf_f0, file="output/output.rda")
+save(perf_year, perf_end, file="output/output.rda")

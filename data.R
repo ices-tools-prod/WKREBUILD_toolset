@@ -1,4 +1,4 @@
-# data.R - CONDITIONS a series of OMs
+# data.R - CONDITION OM(s)
 # WKREBUILD_toolset/data.R
 
 # Copyright (c) WUR, 2023.

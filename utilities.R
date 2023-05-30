@@ -104,9 +104,9 @@ icesmetrics <- list(
 )
 # }}}
 
-# stats {{{
+# performance statistics {{{
 
-stats <- list(
+annualstats <- list(
 
   # P(SB>SBlim)
   PBlim=list(~iterMeans((SB/Blim) > 1), name="P(SB>SB[lim])",
@@ -117,9 +117,22 @@ stats <- list(
     desc="Probability that spawner biomass is above Btrigger"),
 
   # mean(C)
+  C=list(~iterMeans(C), name="mean(C)",
+    desc="Mean catch over years"),
+
+  # cv(C)
+  cvC=list(~sqrt(iterVars(C)) / iterMeans(C), name="cv(C)",
+    desc="CV of catch over years")
+)
+
+
+stats <- list(
+
+  # mean(C)
   C=list(~yearMeans(C), name="mean(C)",
     desc="Mean catch over years"),
 
+  # AVVC
   # AVVC
   AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
     name="AAV(C)", desc="Average annual variability in catch"),
@@ -171,23 +184,5 @@ include_graphics <- function(path, ...) {
   if(!grepl("/", path) && !grepl("report$", getwd()) && dir.exists("report"))
     path <- file.path("report", path)
   knitr::include_graphics(path, ...)
-}
-# }}}
-
-# combinations {{{
-
-combinations <- function(...) {
-
-  # GET all inputs
-  args <- list(...)
-  
-  # GENERATE all combinations
-  combs <- as.list(do.call(expand.grid, args))
-
-  # DELETE attributes and RENAME
-  attributes(combs) <- NULL
-  names(combs) <- names(args)
-
-  return(combs)
 }
 # }}}

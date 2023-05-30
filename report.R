@@ -21,20 +21,19 @@ load('data/data.rda')
 
 # OM
 pubpng("report/om_metrics.png",
-plot(window(om, end=2021)) +
+plot(window(om, end=2023)) +
   ggtitle("sol.27.4 OM + high F")
 )
 
 # OM /refpts
 pubpng("report/om_icesmetrics.png",
-plot(window(om, end=2021), metrics=icesmetrics) +
+plot(window(om, end=2023), metrics=icesmetrics) +
   ggtitle("sol.27.4 OM + high F") +
   geom_hline(yintercept=1, linetype=2)
 )
 
 # --- MPs (model.R)
 
-load("model/model_runf0.rda")
 load("model/model_runs.rda")
 
 # BASELINE run: F=0
@@ -51,7 +50,7 @@ plot(runf0, runs, window=FALSE) +
 )
 
 pubpng("report/runs_hcrs.png",
-Reduce('+', lapply(names(runs), function(x)
+Reduce('+', lapply(names(runs)[1:4], function(x)
   plot_hockeystick.hcr(control(runs[[x]])$hcr,
   labels=c(trigger="Btrigger", target="Ftarget")) +
   xlab("SSB") + ylab(expression(bar(F))) +
@@ -75,21 +74,17 @@ pubpng("report/perf_tos.png",
 plotTOs(perf_end, x="C", y=c("AAVC", "PBlim"))
 )
 
-# First year where P(B>Blim) > 95% if F=0
-
-perf_f0[statistic == "PBlim" & data > 0.95, .SD[1]]
-
 # First year where P(B>Blim) > 95% by MP
 
-perf_byear[statistic == "PBlim" & data > 0.95, .SD[1], by=mp]
+perf_year[statistic == "PBlim" & data > 0.95, .SD[1], by=mp]
 
 # First year where P(B>Btrigger) > 50% by MP
 
-perf_byear[statistic == "PBtrigger" & data > 0.50, .SD[1], by=mp]
+perf_year[statistic == "PBtrigger" & data > 0.50, .SD[1], by=mp]
 
 # PLOT PBlim by year and mp
 
-dat <- perf_byear[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
+dat <- perf_year[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
 
 pubpng("report/perf_pblim_mp.png",
 ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
@@ -100,7 +95,7 @@ ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
 
 # PLOT PBtrigger by year and mp
 
-dat <- perf_byear[statistic == "PBtrigger", .(PBtrigger=mean(data)), by=.(mp, year)]
+dat <- perf_year[statistic == "PBtrigger", .(PBtrigger=mean(data)), by=.(mp, year)]
 
 pubpng("report/perf_pbtrigger_mp.png",
 ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
