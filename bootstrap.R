@@ -7,11 +7,10 @@
 # Distributed under the terms of the EUPL-1.2
 
 
-library(icesTAF)
-
-# INSTALL from binary packages in r-universe
+# INSTALL from binary packages in r-universe and CRAN
 
 install.packages(
-  c("FLCore", "FLFishery", "FLasher", "ggplotFL", "mse", "mseviz", "FLSRTMB"),
+  c("FLCore", "FLFishery", "FLasher", "ggplotFL", "mse", "mseviz", "FLSRTMB",
+    "doFuture", "icesTAF"),
   repos=structure(c(CRAN="https://cloud.r-project.org/",
     FLR="https://flr.r-universe.dev")))

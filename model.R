@@ -14,27 +14,11 @@ library(mse)
 
 source("utilities.R")
 
-# - SETUP parallel
-# NOTE: 4 cores for 32 Gb RAM
+# - SETUP
 
-library(doParallel)
-
-# Linux
-if(os.linux()) {
-  registerDoParallel(4)
-# Windows
-} else {
-  cl <- makeCluster(4)
-  registerDoParallel(cl)
-}
-
-# or future
+# USE parallel via doFuture
 
 library(doFuture)
-registerDoFuture()
-library(progressr)
-handlers(global = TRUE)
-handlers("progress")
 
 # Linux
 if(os.linux()) {
@@ -43,6 +27,8 @@ if(os.linux()) {
 } else {
   plan(multisession, workers=4)
 }
+
+registerDoFuture()
 
 # LOAD oem and oem
 
@@ -62,12 +48,12 @@ runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
 
 # SETUP standard ICES advice rule
 
-# using icesControl
+# (1) using icesControl
 
 arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
   Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
 
-# or step by step
+# (2) or step by step
 
 arule <- mpCtrl(list(
 
