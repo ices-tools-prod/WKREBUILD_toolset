@@ -19,6 +19,7 @@ source("utilities.R")
 # USE parallel via doFuture
 
 library(doFuture)
+options(doFuture.rng.onMisuse="ignore")
 
 # Linux
 if(os.linux()) {
