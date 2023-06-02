@@ -14,3 +14,5 @@ install.packages(
     "doFuture", "icesTAF"),
   repos=structure(c(CRAN="https://cloud.r-project.org/",
     FLR="https://flr.r-universe.dev")))
+
+icesTAF::taf.bootstrap(software=FALSE)

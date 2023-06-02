@@ -10,8 +10,8 @@
 library(icesTAF)
 mkdir("data")
 
-library(mse)
-library(FLSRTMB)
+taf.library(mse)
+taf.library(FLSRTMB)
 
 library(progressr)
 handlers(global=TRUE)
@@ -39,13 +39,14 @@ load('bootstrap/data/sol274.rda')
 # FIT 3 models up to 2022
 
 srfits <- FLSRs(lapply(setNames(list(bevholtSV, rickerSV, segreg),
-  nm=c("bevholt","ricker","segreg")), function(x)
+  nm=c("bevholt", "segreg")), function(x)
   srrTMB(as.FLSR(window(run, end=iy - 1), model=x), spr0=yearMeans(spr0y(run))))
 )
 
 # BOOTSTRAP
 
-srpars <- bootstrapSR(window(run, end=iy - 1), iters=500)
+srpars <- bootstrapSR(window(run, end=iy - 1), iters=500,
+  models=c("bevholt", "segreg"))
 
 # GENERATE deviances
 
