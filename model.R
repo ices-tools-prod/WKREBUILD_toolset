@@ -12,6 +12,10 @@ mkdir("model")
 
 library(mse)
 
+library(progressr)
+handlers(global=TRUE)
+handlers("txtprogressbar")
+
 source("utilities.R")
 
 # - SETUP
@@ -72,7 +76,7 @@ arule <- mpCtrl(list(
     args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
   ))
 
-# - RUN ICES advice rule varying slopes and min Fs (AR_Steep + F below Blim)
+# - RUN ICES advice rule, change slopes and min Fs (AR_Steep + F below Blim)
 
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger), length=5),

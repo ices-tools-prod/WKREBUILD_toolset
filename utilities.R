@@ -186,3 +186,99 @@ include_graphics <- function(path, ...) {
   knitr::include_graphics(path, ...)
 }
 # }}}
+
+# bootstrapSR {{{
+
+bootstrapSR <- function(x, iters=100,
+  models=c("bevholt", "ricker", "segreg"), verbose=TRUE) {
+
+  # BUILD FLSR
+  spr0x <- yearMeans(spr0y(x))
+  x <- as.FLSR(x)
+
+  # SAMPLES, year * iters
+  id <- matrix(sample(seq(dim(x)[2]), dim(x)[2] * iters, replace=TRUE),
+    nrow=dim(x)[2], ncol=iters)
+
+  # SELECT models
+
+  models <- match.arg(models, several.ok=TRUE)
+  mod <- list(bevholt=bevholtSV, ricker=rickerSV, segreg=segreg)[models]
+
+  # BOOTSTRAP
+
+  p <- progressor(along=seq(iters), offset=1)
+
+  res <- foreach(i=seq(iters)) %dopar% {
+
+    y <- x
+
+    rec(y) <- rec(y)[, id[, i]]
+    ssb(y) <- ssb(y)[, id[, i]]
+  
+    fits <- lapply(mod, function(m) {
+      model(y) <- m
+      srrTMB(y, spr0=spr0x)
+    })
+
+    if(verbose)
+      p(message = sprintf(paste0("[", i, "]")))
+
+    llkhds <- unlist(lapply(fits, 'logLik'))
+
+    best <- fits[[which.min(llkhds)]]
+
+    m <- match(models[which.min(llkhds)], c("bevholt", "ricker", "segreg"))
+
+    rbind(params(best), FLPar(m=m), FLPar(attr(best, 'SV')))
+  }
+
+  # COMBINE along iters
+  out <- Reduce(combine, res)
+
+  return(out)
+}
+# }}}
+
+# nar1rlnorm {{{
+
+nar1rlnorm <- function(n=NULL, meanlog=0, sdlog=1, rho=0, years,
+  bias.correct=TRUE) {
+
+  # SET iters
+  if(is.null(n))
+    n <- max(c(length(meanlog), length(sdlog), length(rho)))
+
+  # NUMBER of years
+  nyrs <- length(years)
+
+  # REPEAT inputs to correct size
+  rho <- rep(c(rho), length=n)
+  meanlog <- rep(c(meanlog), length=n)
+  sdlog <- rep(c(sdlog), length=n)
+
+  res <- matrix(rnorm(n * nyrs, mean=meanlog, sd=sdlog),
+    nrow=length(years), ncol=n)
+
+  # BIAS correction
+  logbias <- 0
+
+  if(bias.correct)
+    logbias <- 0.5 * sdlog ^ 2
+
+  # RHOSQ
+  rhosq <- rho ^ 2
+
+  # FILL along years
+  for(y in seq(nyrs)[-1])
+    res[y, ] <- rho * res[y - 1, ] + sqrt(1 - rhosq) * res[y, ]
+
+  # APPLY bias correction
+  res <- exp(res - logbias)
+
+  out <- FLQuant(c(res), dimnames=list(year=years, iter=seq(n)))
+
+	return(out)
+}
+
+# }}}

@@ -2,12 +2,18 @@
 
 FLR-based tools for evaluating recovery plans in ICES.
 
-- Quickstart
-  - Use github template
-  - Install packages
-  - Provide inputs
-- 
 
+## DESCRIPTION
+
+## INSTALLATION
+
+``` r
+install.packages(
+  c("FLCore", "FLFishery", "FLasher", "ggplotFL", "mse", "mseviz", "FLSRTMB",
+    "doFuture", "icesTAF"),
+  repos=structure(c(CRAN="https://cloud.r-project.org/",
+    FLR="https://flr.r-universe.dev")))
+```
 
 ## Distribution
 
@@ -83,11 +89,6 @@ The analysis shown here uses an operating model based on the 2022 WGNSSK stock a
 
 - GENERATE correlated F ~ SSB devs
 - COMPUTE weights/probabilities of alternative SRRs
-- COMBINE SRRs
-  - fwd(FLStock, FLSRs) BUT om@FLSR
-  - combine(a, b, model, ssb)
-    - CODE model in R
-    - ADD to FLasher
 - CHECK tac.is options for STF
 
 
