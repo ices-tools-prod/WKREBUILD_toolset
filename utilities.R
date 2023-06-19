@@ -125,7 +125,6 @@ annualstats <- list(
     desc="CV of catch over years")
 )
 
-
 stats <- list(
 
   # mean(C)
@@ -189,6 +188,28 @@ include_graphics <- function(path, ...) {
 
 # bootstrapSR {{{
 
+#' Bootstrap fits of stock-recruits relationships
+#'
+#' Definition ...
+#'
+#' The returned 'FLPar' object contains
+#'
+#' @param x An object of class 'FLStock'.
+#' @param iter Number of bootstrap iterations, 'numeric'.
+#' @param models Name(s) of model(s) to fit, 'character'. See Details.
+#' @param verbose Should progress be reported, 'logical'.
+#'
+#' @return An object or class 'FLPar' containing the estimated paramaters.
+#'
+#' @name bootstrapSR
+#'
+#' @author Iago Mosqueira (WMR)
+#' @seealso \link{FLSR}, link{srrTMB}
+#' @keywords models
+#' @examples
+#' data(ple4)
+#' bootstrapSR(ple4, iter=50, model=c("bevholt", "segreg"))
+
 bootstrapSR <- function(x, iters=100,
   models=c("bevholt", "ricker", "segreg"), verbose=TRUE) {
 
@@ -226,7 +247,10 @@ bootstrapSR <- function(x, iters=100,
 
     llkhds <- unlist(lapply(fits, 'logLik'))
 
+    # FIND BEST model
     best <- fits[[which.min(llkhds)]]
+
+    # MATCH models: bevholt=1, ricker=2, segreg=3
 
     m <- match(models[which.min(llkhds)], c("bevholt", "ricker", "segreg"))
 
@@ -240,45 +264,25 @@ bootstrapSR <- function(x, iters=100,
 }
 # }}}
 
-# nar1rlnorm {{{
+# Roxgen template {{{
 
-nar1rlnorm <- function(n=NULL, meanlog=0, sdlog=1, rho=0, years,
-  bias.correct=TRUE) {
-
-  # SET iters
-  if(is.null(n))
-    n <- max(c(length(meanlog), length(sdlog), length(rho)))
-
-  # NUMBER of years
-  nyrs <- length(years)
-
-  # REPEAT inputs to correct size
-  rho <- rep(c(rho), length=n)
-  meanlog <- rep(c(meanlog), length=n)
-  sdlog <- rep(c(sdlog), length=n)
-
-  res <- matrix(rnorm(n * nyrs, mean=meanlog, sd=sdlog),
-    nrow=length(years), ncol=n)
-
-  # BIAS correction
-  logbias <- 0
-
-  if(bias.correct)
-    logbias <- 0.5 * sdlog ^ 2
-
-  # RHOSQ
-  rhosq <- rho ^ 2
-
-  # FILL along years
-  for(y in seq(nyrs)[-1])
-    res[y, ] <- rho * res[y - 1, ] + sqrt(1 - rhosq) * res[y, ]
-
-  # APPLY bias correction
-  res <- exp(res - logbias)
-
-  out <- FLQuant(c(res), dimnames=list(year=years, iter=seq(n)))
-
-	return(out)
-}
+#' Header
+#'
+#' Definition ...
+#'
+#' @param NAME Description, class
+#'
+#' @return RETURN Description, class
+#'
+#' @name FUNCTION
+#' @rdname FUNCTION
+#' @aliases FUNCTION
+#'
+#' @author WMR (2023)
+#' @seealso [FL-class] [function()] [pkg::function()]
+#' @keywords classes
+#' @examples
+#'
 
 # }}}
+

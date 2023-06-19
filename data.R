@@ -1,4 +1,4 @@
-# data.R - CONDITION OM(s)
+# data.R - CONDITION OM(s), adding initial uncertainty
 # WKREBUILD_toolset/data.R
 
 # Copyright (c) WUR, 2023.
@@ -10,8 +10,10 @@
 library(icesTAF)
 mkdir("data")
 
-taf.library(mse)
-taf.library(FLSRTMB)
+library(mse)
+library(FLSRTMB)
+
+# SETUP progress bars
 
 library(progressr)
 handlers(global=TRUE)
@@ -71,6 +73,8 @@ deviances(om)[, ac(2012:fy)] <- srdevs
 om <- fwd(om, sr=append(rec(run)[, ac(2012:2023)], 1),
   control=as(FLQuants(fbar=fbar(run)[, ac(2012:2023)]), 'fwdControl'))
 
+# COMPARE om ~ run
+
 #  - CONSTRUCT oem
 # TODO: SIMPLIFY deviances, FLoem(om, deviances=list())
 
@@ -79,6 +83,8 @@ oem <- FLoem(
   deviances=list(stk=FLQuants(catch.n=rlnorm(it, catch.n(om) %=% 0, 0.2))),
   method=perfect.oem
 )
+
+bs <- brp(FLBRP(stock(om), sr=sr(om)))
 
 # - SAVE
 
