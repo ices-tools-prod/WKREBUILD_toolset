@@ -12,28 +12,7 @@ mkdir("model")
 
 library(mse)
 
-library(progressr)
-handlers(global=TRUE)
-handlers("txtprogressbar")
-
 source("utilities.R")
-
-# - SETUP
-
-# USE parallel via doFuture
-
-library(doFuture)
-options(doFuture.rng.onMisuse="ignore")
-
-# Linux
-if(os.linux()) {
-  plan(multicore, workers=4)
-# Windows
-} else {
-  plan(multisession, workers=4)
-}
-
-registerDoFuture()
 
 # LOAD oem and oem
 
@@ -81,12 +60,6 @@ arule <- mpCtrl(list(
 runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
   hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger), length=5),
     min=seq(0, 0.10, length=4)))
-
-runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
-  hcr=list(
-    lim=seq(0, c(refpts(om)$Btrigger), length=5),
-    min=seq(0, 0.20, length=5)))
-
 
 # SAVE
 

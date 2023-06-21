@@ -1,10 +1,32 @@
-# utilities.R - DESC
+# utilities.R - 
 # WKREBUILD_toolset/utilities.R
 
 # Copyright (c) WUR, 2023.
 # Author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl>
 #
 # Distributed under the terms of the EUPL-1.2
+
+
+# PARALLEL setup via doFuture
+
+library(doFuture)
+options(doFuture.rng.onMisuse="ignore")
+
+# Linux
+if(os.linux() | os.macos()) {
+  plan(multicore, workers=cores)
+# Windows
+} else if(os.windows()) {
+  plan(multisession, workers=cores)
+}
+
+registerDoFuture()
+
+# SETUP progress bars
+
+library(progressr)
+handlers(global=TRUE)
+handlers("txtprogressbar")
 
 # icesControl {{{
 
@@ -83,6 +105,8 @@ icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
 # }}}
 
 # shortcut_devs {{{
+
+# GET new Fphi, Fcv values.
 
 shortcut_devs <- function(om, Fcv=0.212, Fphi=0.423, SSBcv=0, SSBphi=0) {
   
@@ -186,85 +210,55 @@ include_graphics <- function(path, ...) {
 }
 # }}}
 
-# bootstrapSR {{{
+table_srmodels <- function(x) {
 
-#' Bootstrap fits of stock-recruits relationships
-#'
-#' Definition ...
-#'
-#' The returned 'FLPar' object contains
-#'
-#' @param x An object of class 'FLStock'.
-#' @param iter Number of bootstrap iterations, 'numeric'.
-#' @param models Name(s) of model(s) to fit, 'character'. See Details.
-#' @param verbose Should progress be reported, 'logical'.
-#'
-#' @return An object or class 'FLPar' containing the estimated paramaters.
-#'
-#' @name bootstrapSR
-#'
-#' @author Iago Mosqueira (WMR)
-#' @seealso \link{FLSR}, link{srrTMB}
-#' @keywords models
-#' @examples
-#' data(ple4)
-#' bootstrapSR(ple4, iter=50, model=c("bevholt", "segreg"))
+  tab <- table(x$m)
+  mod <- c("Bevholt:", "Ricker:", "Segreg:")[as.numeric(names(tab))]
+  val <- round(c(tab) / sum(tab), 2)
 
-bootstrapSR <- function(x, iters=100,
-  models=c("bevholt", "ricker", "segreg"), verbose=TRUE) {
+  paste(mod, val, collapse="\n")
+}
 
-  # BUILD FLSR
-  spr0x <- yearMeans(spr0y(x))
-  x <- as.FLSR(x)
+# plot_bootstrapSR {{{
 
-  # SAMPLES, year * iters
-  id <- matrix(sample(seq(dim(x)[2]), dim(x)[2] * iters, replace=TRUE),
-    nrow=dim(x)[2], ncol=iters)
+plot_bootstrapSR <- function(fits, params) {
 
-  # SELECT models
-
-  models <- match.arg(models, several.ok=TRUE)
-  mod <- list(bevholt=bevholtSV, ricker=rickerSV, segreg=segreg)[models]
-
-  # BOOTSTRAP
-
-  p <- progressor(along=seq(iters), offset=1)
-
-  res <- foreach(i=seq(iters)) %dopar% {
-
-    y <- x
-
-    rec(y) <- rec(y)[, id[, i]]
-    ssb(y) <- ssb(y)[, id[, i]]
+  # CREATE ssb vector for range
+  ssbs <- FLQuant(seq(1, max(ssb(fits[[1]])), length=100))
   
-    fits <- lapply(mod, function(m) {
-      model(y) <- m
-      srrTMB(y, spr0=spr0x)
-    })
+  # PREDICT rec at ssbs 
+  recs <- predict(predictModel(params=srpars, model=mixedsrr()$model),
+    ssb=ssbs)
 
-    if(verbose)
-      p(message = sprintf(paste0("[", i, "]")))
+  # ADD error
+  recs <- exp(log(recs) + rnorm(500, recs %=% 0, sd=(c(srpars$sigmaR))))
 
-    llkhds <- unlist(lapply(fits, 'logLik'))
+  # CREATE df for plotting
+  dat <- model.frame(FLQuants(rec=recs, ssb=ssbs), drop=TRUE)
+  dat <- data.table(subset(dat, rec <= max(rec(run)) * 1.5))
 
-    # FIND BEST model
-    best <- fits[[which.min(llkhds)]]
-
-    # MATCH models: bevholt=1, ricker=2, segreg=3
-
-    m <- match(models[which.min(llkhds)], c("bevholt", "ricker", "segreg"))
-
-    rbind(params(best), FLPar(m=m), FLPar(attr(best, 'SV')))
-  }
-
-  # COMBINE along iters
-  out <- Reduce(combine, res)
-
-  return(out)
+  # PLOT fits
+  plotsrs(fits[c("bevholt", "segreg")]) +
+    annotate("text", x=-Inf, y=Inf, hjust = -0.2, vjust = 1.5,
+      label=table_srmodels(srpars)) +
+    # QUANTILE smoothers
+    geom_smooth(data=dat[, .(rec=quantile(rec, 0.50)), by=ssb],
+      colour="black", fill=NA, linewidth=0.5,
+      method='loess', formula=y~x, se=FALSE) +
+    geom_smooth(data=dat[, .(rec=quantile(rec, 0.05)), by=ssb],
+      colour="black", fill=NA, linewidth=0.5, linetype=2,
+      method='loess', formula=y~x, se=FALSE) +
+    geom_smooth(data=dat[, .(rec=quantile(rec, 0.95)), by=ssb],
+      colour="black", fill=NA, linewidth=0.5, linetype=2,
+      method='loess', formula=y~x, se=FALSE) -
+    # POINTS
+    geom_point(data=dat, aes(x=jitter(ssb, 2), rec), 
+      colour="gray", fill="white", alpha=0.1, size=0.5) +
+    theme(legend.position="none")
 }
 # }}}
 
-# Roxgen template {{{
+# Roxygen template {{{
 
 #' Header
 #'
@@ -285,4 +279,3 @@ bootstrapSR <- function(x, iters=100,
 #'
 
 # }}}
-
