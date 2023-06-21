@@ -7,13 +7,16 @@ FLR-based tools for evaluating recovery plans in ICES.
 
 ## INSTALLATION
 
-``` r
-install.packages(
-  c("FLCore", "FLFishery", "FLasher", "ggplotFL", "mse", "mseviz", "FLSRTMB",
-    "doFuture", "icesTAF"),
+```r
+install.packages(deps(),
   repos=structure(c(CRAN="https://cloud.r-project.org/",
     FLR="https://flr.r-universe.dev")))
+
+library(icesTAF)
+
+taf.bootstrap()
 ```
+
 
 ## Distribution
 
