@@ -15,7 +15,7 @@ opts_chunk$set(
 )
 ```
 
-# Installation
+# Installing
 
 The code has required a number of extensions and modifications of code in various FLR packages. The simples way to install the required versions is to make use of the FLR R-universe repository, using the following command
 
