@@ -1,5 +1,5 @@
 ---
-title: "DRAFT stock recovery analysis: WKREBUILD toolset"
+title: "FLR toolset for evaluating recovery plans for ICES WKREBUILD2"
 author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: tint::tintHtml
@@ -15,19 +15,23 @@ opts_chunk$set(
 )
 ```
 
-# Installing
 
-The code has required a number of extensions and modifications of code in various FLR packages. The simples way to install the required versions is to make use of the FLR R-universe repository, using the following command
+# SELECT by U(0,1) ~ P(model)
+srpars <- bootstrapSR(window(run, end=iy - 1), iters=it,
+  models=c("bevholt", "ricker", "segreg"), method="probability")
 
-```{r, eval=FALSE}
 
-install.packages(c("FLCore", "FLasher", "ggplotFL", "mse", "mseviz"),
-  repos=c(CRAN="https://cloud.r-project.org/",
-  FLR="https://flr.r-universe.dev"))
+# OM from McMC run
+omc <- fwdWindow(FLom(stock=runmc, refpts=refpts, model='mixedsrr',
+  params=srpars, deviances=srdevs), end=fy)
 
-```
 
-# Operating model conditioning ([data.R](https://github.com/iagomosqueira/WKREBUILD_toolset/blob/main/data.R))
+# Installation
+
+- INSTALL from r-universe and CRAN
+
+
+# [data.R](https://github.com/iagomosqueira/WKREBUILD_toolset/blob/main/data.R). conitioning of an Operating Model.
 
 - An OM based on the 2022 AAP stock assessment for sol.27.4 was used for development. The model has been run using ADMB's McMC routine to obtain some variability in population abundance and fishing mortality, solely due to parameter uncertainty.
 

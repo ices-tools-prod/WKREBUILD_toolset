@@ -12,15 +12,17 @@
 library(doFuture)
 options(doFuture.rng.onMisuse="ignore")
 
-# Linux
-if(os.linux() | os.macos()) {
-  plan(multicore, workers=cores)
-# Windows
-} else if(os.windows()) {
-  plan(multisession, workers=cores)
-}
+if(exists("cores")) {
 
-registerDoFuture()
+  # Linux
+  if(os.linux() | os.macos()) {
+    plan(multicore, workers=cores)
+  # Windows
+  } else if(os.windows()) {
+    plan(multisession, workers=cores)
+  }
+  registerDoFuture()
+}
 
 # SETUP progress bars
 
@@ -166,109 +168,6 @@ stats <- list(
     desc="ICES Risk 2, probability that spawner biomass is above Blim once")
 )
 
-# }}}
-
-# retroErrorByAge {{{
-
-retroErrorByAge <- function(retros, object) {
-
-  # GET dims
-  nret <- length(retros) - 1
-  fy <- dims(retros[[1]])$maxyear
-
-  # COMPUTE errors: N=stock.n, F=harvest
-  dat <- do.call(rbind, lapply(seq(2, nret), function(y) {
-  model.frame(FLQuants(
-    N=stock.n(retros[[1]])[, ac(seq(fy - nret, fy - y + 1))] /
-      stock.n(retros[[y]])[, ac(seq(fy - nret, fy - y + 1))],
-    F=harvest(retros[[1]])[, ac(seq(fy - nret, fy - y + 1))] /
-      harvest(retros[[y]])[, ac(seq(fy - nret, fy - y + 1))]))
-  }))
-
-  # CALCULATE covariance with age
-  cab <- cov(dat[, c('age', 'N')])
-
-  # COMPUTE mean and sd by age
-  musig <- data.table(dat)[, .(mean=mean(N), sd=sd(N)), by=age]
-
-  nsamp <- length(object[1,])
-
-  out <- Reduce(qbind, FLQuants(lapply(musig$age, function(x) {
-    FLQuant(rnorm(nsamp, musig[age == x]$mean, musig[age == x]$sd),
-      dimnames=list(age=x, year=dimnames(object)$year))
-  })))
-
-  return(out)
-}
-# }}}
-
-# include_graphics {{{
-include_graphics <- function(path, ...) {
-  if(!grepl("/", path) && !grepl("report$", getwd()) && dir.exists("report"))
-    path <- file.path("report", path)
-  knitr::include_graphics(path, ...)
-}
-# }}}
-
-table_srmodels <- function(x) {
-
-  tab <- table(x$m)
-  mod <- c("Bevholt:", "Ricker:", "Segreg:")[as.numeric(names(tab))]
-  val <- round(c(tab) / sum(tab), 2)
-
-  paste(mod, val, collapse="\n")
-}
-
-# plot_bootstrapSR {{{
-
-plot_bootstrapSR <- function(fits, params) {
-
-  # CREATE ssb vector for range
-  ssbs <- FLQuant(seq(1, max(ssb(fits[[1]])), length=100))
-  
-  # PREDICT rec at ssbs 
-  recs <- predict(predictModel(params=srpars, model=mixedsrr()$model),
-    ssb=ssbs)
-
-  # ADD error
-  recs <- exp(log(recs) + rnorm(500, recs %=% 0, sd=(c(srpars$sigmaR))))
-
-  # CREATE df for plotting
-  dat <- model.frame(FLQuants(rec=recs, ssb=ssbs), drop=TRUE)
-  dat <- data.table(subset(dat, rec <= max(rec(run)) * 1.5))
-
-  # PLOT fits
-  plotsrs(fits[c("bevholt", "segreg")]) +
-    annotate("text", x=-Inf, y=Inf, hjust = -0.2, vjust = 1.5,
-      label=table_srmodels(srpars)) +
-    # QUANTILE smoothers
-    geom_smooth(data=dat[, .(rec=quantile(rec, 0.50)), by=ssb],
-      colour="black", fill=NA, linewidth=0.5,
-      method='loess', formula=y~x, se=FALSE) +
-    geom_smooth(data=dat[, .(rec=quantile(rec, 0.05)), by=ssb],
-      colour="black", fill=NA, linewidth=0.5, linetype=2,
-      method='loess', formula=y~x, se=FALSE) +
-    geom_smooth(data=dat[, .(rec=quantile(rec, 0.95)), by=ssb],
-      colour="black", fill=NA, linewidth=0.5, linetype=2,
-      method='loess', formula=y~x, se=FALSE) -
-    # POINTS
-    geom_point(data=dat, aes(x=jitter(ssb, 2), rec), 
-      colour="gray", fill="white", alpha=0.1, size=0.5) +
-    theme(legend.position="none")
-}
-# }}}
-
-# - {{{
-`-.gg` <- function(plot, layer) {
-    if (missing(layer)) {
-        stop("Cannot use `-.gg()` with a single argument. Did you accidentally put - on a new line?")
-    }
-    if (!is.ggplot(plot)) {
-        stop('Need a plot on the left side')
-    }
-    plot$layers = c(layer, plot$layers)
-    plot
-}
 # }}}
 
 # Roxygen template {{{

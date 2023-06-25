@@ -14,12 +14,15 @@ mkdir("output")
 
 library(mse)
 
+source("utilities.R")
+
 # LOAD model.R outputs
 
-load("model/model_runs.rda")
+load("model/model.rda")
 
-# ADD F=0 run
-runs$F0 <- FLmse(om=runf0)
+# ADD runf0 for performance calculations TODO: SIMPLIFY
+
+runs <- c(runs, F0=FLmse(om=runf0))
 
 # COMPUTE yearly performance statistics
 
@@ -28,6 +31,22 @@ perf_year <- performance(runs, statistics=annualstats, years=2023:2041)
 # COMPUTE final performance statistics (2035-2041)
 
 perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
+
+# TODO:
+
+# COMPUTE first year where P(SB>=SBlim) >= 0.95
+perf_year[statistic == 'PBlim', .(PBlim=mean(data)), by=.(year, mp)][PBlim > 0.95, .(first=min(year)), by=mp]
+
+perf_year[statistic == 'PBlim' & year == max(year), mean(data), by=.(mp, year)]
+
+# mp ~ year | C
+
+dcast(perf_year[statistic == 'C', .(data=mean(data)),
+  by=.(year, mp, name, desc)], mp ~ year)
+
+# statistic + mp ~ year
+
+dcast(perf_year[, .(data=mean(data)), by=.(year, mp, name, desc)], name + mp ~ year)
 
 # SAVE
 

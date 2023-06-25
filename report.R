@@ -12,14 +12,28 @@ mkdir("report")
 library(mse)
 library(mseviz)
 library(patchwork)
+library(scales)
 
 source("utilities.R")
 
 # --- OM (data.R)
 
-load('data/data.rda')
+# SRR fits and bootstrap
+
+load('data/bootstrap.rda')
+
+taf.png(file="report/data_srrfits.png")
+plotsrs(fits)
+dev.off()
+
+taf.png(file="report/data_srbootstrap.png", width=1400)
+plot_bootstrapSR(fits, srpars)
+dev.off()
 
 # OM
+
+load('data/data.rda')
+
 pubpng("report/om_metrics.png",
 plot(window(om, end=2023)) +
   ggtitle("sol.27.4 OM + high F")
@@ -43,7 +57,6 @@ plot(runf0) +
 )
 
 # PLOT RUNS
-
 pubpng("report/runs.png",
 plot(runf0, runs, window=FALSE) +
   geom_vline(xintercept=2023, linetype=3)

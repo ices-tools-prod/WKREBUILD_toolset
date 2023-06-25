@@ -13,14 +13,17 @@ mkdir("data")
 library(mse)
 library(FLSRTMB)
 
+# CHOOSE number of cores for doFuture
 cores <- 4
 
 source("utilities.R")
 
-# - args
+# LOAD AAP SA results, 2022 ICES WGNSSK sol.27.4
+
+load('bootstrap/data/sol274.rda')
 
 # INTERMEDIATE year
-iy <- 2023
+iy <- 2022
 
 # DATA year
 dy <- iy - 1
@@ -31,65 +34,53 @@ fy <- 2042
 # NUMBER of iterations
 it <- 500
 
-# - LOAD AAP SA results, 2022 ICES WGNSSK sol.27.4
-
-load('bootstrap/data/sol274.rda')
 
 # - SRRs
 
 # FIT models
-
-fits <- srrTMB(as.FLSRs(run, models=c("bevholt", "ricker", "segreg")), 
+fits <- srrTMB(as.FLSRs(run, models=c("bevholt", "segreg")), 
   spr0=mean(spr0y(run)))
 
-# INSPECT fits
-
+# PLOT
 plotsrs(fits)
 
-# BOOTSTRAP fits of chosen models
-
+# BOOTSTRAP and SELECT model by logLik
 srpars <- bootstrapSR(window(run, end=iy - 1), iters=it,
-  models=c("bevholt", "segreg"))
+  models=c("bevholt", "segreg"), method="best")
 
-srpars <- bootstrapSR(window(run, end=iy - 1), iters=it,
-  models=c("bevholt", "segreg"), method="rejection")
-
+# PLOT
 plot_bootstrapSR(fits, srpars)
 
-# GENERATE deviances
+# SAVE
+save(fits, srpars, file="data/bootstrap.rda", compress="xz")
 
-srdevs <- nar1rlnorm(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(iy, fy))
 
 # - CONSTRUCT om
 
-srr <- as.FLSR(run, model=mixedsrr, params=srpars)
+# NOTE: overfishing stock
+run <- fwd(run, sr=rec(run)[, ac(2013:2023)],
+  fbar=fbar(run)[, ac(2013:2022)] * 1.6)
 
-om <- FLom(stock=run, refpts=refpts, sr=srr)
+# GENERATE future deviances from bootstrap
+
+srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(iy, fy))
+
+plot(srdevs)
+
+# OBS error 0.3
+
+# BUILD FLom
+om <- FLom(stock=propagate(run, 500), refpts=refpts, model='mixedsrr',
+  params=srpars, deviances=srdevs)
 
 # SETUP om future
+om <- fwdWindow(om, end=fy)
 
-om <- propagate(fwdWindow(om, end=fy), it)
+# SET stochastic rec iy-1
+stock.n(stock(om))[1,'2022'] <- rec(om)[,'2022'] * srdevs[,'2022']
 
-# TODO: SET deviances(om, start=2012) <- foo()
-deviances(om)[, ac(2012:fy)] <- srdevs
+# FWD for iy
+om <- fwd(om, catch=catch(run)[,'2023'])
 
-# RUN hindcast w/deviances
-# TODO: AVOID need for rec 2024
-om <- fwd(om, sr=append(rec(run)[, ac(2012:2023)], 1),
-  control=as(FLQuants(catch=catch(run)[, ac(2012:2023)]), 'fwdControl'))
-plot(run, stock(om))
-
-# COMPARE sigma(ssb)
-
-#  - CONSTRUCT oem
-# TODO: SIMPLIFY deviances, FLoem(om, deviances=list())
-
-oem <- FLoem(
-  observations=list(stk=fwdWindow(run, end=fy)),
-  deviances=list(stk=FLQuants(catch.n=rlnorm(it, catch.n(om) %=% 0, 0.2))),
-  method=perfect.oem
-)
-
-# - SAVE
-
-save(om, oem, file="data/data.rda", compress="xz")
+# SAVE
+save(om, file="data/data.rda", compress="xz")

@@ -12,6 +12,9 @@ mkdir("model")
 
 library(mse)
 
+# CHOOSE number of cores for doFuture
+cores <- 4
+
 source("utilities.R")
 
 # LOAD oem and oem
@@ -20,7 +23,7 @@ load('data/data.rda')
 
 # SET intermediate year, start of runs
 
-mseargs <- list(iy=2022)
+mseargs <- list(iy=2023)
 
 # F and SSB deviances
 
@@ -55,12 +58,17 @@ arule <- mpCtrl(list(
     args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
   ))
 
-# - RUN ICES advice rule, change slopes and min Fs (AR_Steep + F below Blim)
+# - TEST advice rule
 
-runs <- mps(om, oem=oem, ctrl=arule, args=mseargs,
+system.time(
+test <- mp(om, ctrl=arule, args=mseargs)
+)
+
+# - RUN ICES advice rule, changing slopes and min Fs (AR_Steep + F below Blim)
+
+runs <- mps(om, ctrl=arule, args=mseargs,
   hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger), length=5),
     min=seq(0, 0.10, length=4)))
 
 # SAVE
-
-save(runf0, runs, file="model/model_runs.rda", compress="xz")
+save(runf0, runs, file="model/model.rda", compress="xz")
