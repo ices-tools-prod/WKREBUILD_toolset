@@ -28,14 +28,17 @@ runs <- c(runs, F0=FLmse(om=runf0))
 
 perf_year <- performance(runs, statistics=annualstats, years=2023:2041)
 
-# COMPUTE final performance statistics (2035-2041)
+# COMPUTE performance statistics (2024-2041)
 
-perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
+perf <- performance(runs, statistics=stats, years=list(2024:2041))
 
 # TODO:
 
 # COMPUTE first year where P(SB>=SBlim) >= 0.95
 perf_year[statistic == 'PBlim', .(PBlim=mean(data)), by=.(year, mp)][PBlim > 0.95, .(first=min(year)), by=mp]
+
+# TODO:
+compute(perf_year, min(year), where=PBlim > 0.95) 
 
 perf_year[statistic == 'PBlim' & year == max(year), mean(data), by=.(mp, year)]
 

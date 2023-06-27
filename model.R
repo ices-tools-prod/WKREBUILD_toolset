@@ -1,4 +1,4 @@
-# model.R - Running mse with NS sol.27.40
+# model.R - Running rebuilding MPs
 # WKREBUILD_toolset/model.R
 
 # Copyright (c) WUR, 2023.
@@ -18,56 +18,48 @@ cores <- 4
 source("utilities.R")
 
 # LOAD oem and oem
-
 load('data/data.rda')
 
 # SET intermediate year, start of runs
-
 mseargs <- list(iy=2023)
 
 # F and SSB deviances
-
+# TODO: CALCULATE Fcv, Fphi
 sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 # - RUN for F=0
 
-runf0 <- fwd(om, control=fwdControl(year=2023:2042, quant="fbar", value=0))
+runf0 <- fwd(om, control=fwdControl(year=2024:2042, quant="fbar", value=0))
+
+# - RUN ICES advice rule
 
 # SETUP standard ICES advice rule
-
-# (1) using icesControl
-
-arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
-  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
-
-# (2) or step by step
-
 arule <- mpCtrl(list(
 
-  # shortcut.sa + SSBdevs
+  # (est)imation method: shortcut.sa + SSB deviances
   est = mseCtrl(method=shortcut.sa,
     args=list(SSBdevs=sdevs$SSB)),
 
-  # hockeystick
+  # hcr: hockeystick (fbar ~ ssb)
   hcr = mseCtrl(method=hockeystick.hcr,
-    args=list(lim=0, trigger=42838, target=0.207, min=0,
-    metric="ssb", output="fbar")),
+    args=list(lim=0, trigger=refpts(om)$Btrigger, target=refpts(om)$Fmsy,
+    min=0, metric="ssb", output="fbar")),
 
-  # tac.is + Fdevs
+  # (i)mplementation (sys)tem: tac.is (C ~ F) + F deviances
   isys = mseCtrl(method=tac.is,
     args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
   ))
 
-# - TEST advice rule
+# RUN using advice rule
+runar <- mp(om, ctrl=arule, args=mseargs)
 
-system.time(
-test <- mp(om, ctrl=arule, args=mseargs)
-)
+# PLOT
+plot(runf0, runar, window=FALSE)
 
 # - RUN ICES advice rule, changing slopes and min Fs (AR_Steep + F below Blim)
 
 runs <- mps(om, ctrl=arule, args=mseargs,
-  hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger), length=5),
+  hcr=combinations(lim=seq(0, c(refpts(om)$Btrigger) * 0.50, length=4),
     min=seq(0, 0.10, length=4)))
 
 # SAVE

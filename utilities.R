@@ -1,4 +1,4 @@
-# utilities.R - 
+# utilities.R - Extra functions
 # WKREBUILD_toolset/utilities.R
 
 # Copyright (c) WUR, 2023.
