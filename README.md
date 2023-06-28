@@ -70,9 +70,10 @@ A new repository should contain the following folder and tree structure, which i
 - Adapt the contents of `DATA.bib` file to match the stock and data file.
 - Call `icesTAF::taf.boot()` to get data files places in `bootstrap/data`.
 - Inspect and adapt each R script file.
-- `trove.R` is a non-TAF file that contains alternative formulations and commands for some of the steps in the analysis. If the choice shown the example dataset does not suit your case study, look if there is any other option for that particular step that might work better.
 
 ![](https://user-images.githubusercontent.com/1029847/249617706-e37724ad-f4a8-47d6-a481-c115cefd8b3b.png)
+
+- `trove.R` is a non-TAF file that contains alternative formulations and commands for some of the steps in the analysis. If the choice shown the example dataset does not suit your case study, look if there is any other option for that particular step that might work better.
 
 ## More information
 
