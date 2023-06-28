@@ -27,7 +27,6 @@ if(exists("cores")) {
 # SETUP progress bars
 
 library(progressr)
-handlers(global=TRUE)
 handlers("txtprogressbar")
 
 # icesControl {{{

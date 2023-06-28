@@ -33,6 +33,7 @@ fy <- 2042
 # NUMBER of iterations
 it <- 500
 
+set.seed(987)
 
 # - SRRs
 
@@ -54,7 +55,7 @@ save(fits, srpars, file="data/bootstrap.rda", compress="xz")
 # - CONSTRUCT FLom
 
 # GENERATE future deviances: lognormal autocorrelated
-srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(iy - 1, fy))
+srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(dy, fy))
 
 plot(srdevs)
 
@@ -65,11 +66,22 @@ om <- FLom(stock=propagate(run, it), refpts=refpts, model='mixedsrr',
 # SETUP om future
 om <- fwdWindow(om, end=fy)
 
-# SET stochastic rec iy-1
+# SET stochastic rec dy
 rec(stock(om))[, '2022'] <- rec(om)[1, '2022'] * srdevs[, '2022']
 
 # PROJECT forward for iy assumption
 om <- fwd(om, catch=FLQuant(4289.2, dimnames=list(year=2023)))
 
-# SAVE
-save(om, file="data/data.rda", compress="xz")
+# F and SSB deviances
+# TODO: CALCULATE Fcv, Fphi.
+sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
+
+# - CONSTRUCT iem, implementation error module w/10% noise
+
+iem <- FLiem(method=noise.iem,
+  args=list(noise=rlnorm(500, rec(om) %=% 0, 0.1)))
+
+
+# - SAVE
+
+save(om, iem, sdevs, file="data/data.rda", compress="xz")
