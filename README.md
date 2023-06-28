@@ -75,6 +75,6 @@ A new repository should contain the following folder and tree structure, which i
 
 - `trove.R` is a non-TAF file that contains alternative formulations and commands for some of the steps in the analysis. If the choice shown the example dataset does not suit your case study, look if there is any other option for that particular step that might work better.
 
-## More information
+## Getting help
 
-## References
+- Problems or questions about the toolset are better reported as an [issue in this repository](https://github.com/iagomosqueira/WKREBUILD_toolset/issues).
