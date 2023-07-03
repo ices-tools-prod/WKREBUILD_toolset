@@ -46,6 +46,10 @@ plot(window(om, end=2023), metrics=icesmetrics) +
   geom_hline(yintercept=1, linetype=2)
 )
 
+plot(window(om, end=2023), runs[1:3], metrics=icesmetrics) +
+  ggtitle("sol.27.4 OM + high F") +
+  geom_hline(yintercept=1, linetype=2)
+
 # --- MPs (model.R)
 
 load("model/model_runs.rda")

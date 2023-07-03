@@ -121,12 +121,12 @@ shortcut_devs <- function(om, Fcv=0.212, Fphi=0.423, SSBcv=0, SSBphi=0) {
 # }}}
 
 # icesmetrics {{{
-icesmetrics <- list(
-  FMSY=function(x) unitSums(fbar(x)) %/% refpts(x)$Fmsy,
-  SBMSY=function(x) unitSums(ssb(x)) %/% refpts(x)$Btrigger,
-  SBPA=function(x) unitSums(ssb(x)) %/% refpts(x)$Bpa,
-  SBlim=function(x) unitSums(ssb(x)) %/% refpts(x)$Blim
-)
+
+# NAME = function ~ refpt, e.g. FMSY = fbar(om) / refpts(om)$Fmsy
+
+icesmetrics <- list(FMSY=fbar~Fmsy, SBMSY=ssb~Btrigger,
+  SBPA=ssb~Bpa, SBlim=ssb~Blim)
+
 # }}}
 
 # performance statistics {{{
@@ -150,7 +150,7 @@ annualstats <- list(
     desc="CV of catch over years")
 )
 
-stats <- list(
+fullstats <- list(
 
   # mean(C)
   C=list(~yearMeans(C), name="mean(C)",

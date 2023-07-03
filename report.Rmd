@@ -33,6 +33,46 @@ opts_chunk$set(
 stochasticity, process and estimation uncertainty, and correlated
 errors (Kell et al., 2005; ICES, 2013; Punt et al., 2016)
 
+
+## bootstrap/initial
+
+The essential inputs for the analysis include the result of the stock assessment model fit and the current set of reference points.
+
+For example, `bootstrap/initial/data/sol274.rda` contains the following objects:
+
+- `run`: The latest AAP stock assessment for sol.27.4 (WGNSSK 2023), as an object or class `FLStock`. The object does not reflect the WGNSSK 2023 sol.27.4 assessment, as it has been artificially depleted for demonstration purposes.
+
+- `refpts`: An object of class `FLPar` containing the reference points, biological and operational, calculated for this stock in the last benchmark (ICES, 2020).
+
+Uncertainty in past dynamics and initial conditions might have been quantified, for example by employing the McMC sampling procedure available in the stock assessment model, by bootstrap of model inputs, or through a ensemble of model fits. If that is the case, the conditioning steps in `data.R` should be adapted accordingly. 
+
+- `runmc`: an example stock assessment run where parameter uncertainty is already included. This was obtained by employing the `mcmc` option of ADMB.
+
+- `tac`: The total catch to be applied to the stock in the intermediate year. In this case this reflects an expected level of uptake of the 2023 TAC.
+
+## data.R
+
+This file contains the Operating Model conditioning, limited here to a minimum level of consideration of uncertainty.
+
+## model.R
+
+- MP(s) specification, running and tuning, if required (`model.R`).
+
+## output.R
+
+- Performance evaluation (`output.R`).
+
+##  report.R
+
+- Generating graphical outputs (`report.R`).
+
+## trove.R
+
+##  utilities.R
+
+
+
+
 ```{r, eval=FALSE}
 
 # NOTE: overfishing stock

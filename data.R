@@ -13,10 +13,13 @@ mkdir("data")
 library(mse)
 library(FLSRTMB)
 
-# CHOOSE number of cores for doFuture
-cores <- 4
+# CHOOSE number of cores for doFuture / doParallel
+cores <- 1
 
 source("utilities.R")
+
+# ACTIVATE progressr bar
+handlers(global=TRUE)
 
 # LOAD AAP SA results, 2022 ICES WGNSSK sol.27.4
 load('bootstrap/data/sol274.rda')
@@ -35,7 +38,7 @@ it <- 500
 
 set.seed(987)
 
-# - SRRs
+# - Stock-recruitment relationship(s) **
 
 # FIT models
 fits <- srrTMB(as.FLSRs(run, models=c("bevholt", "segreg")), 
@@ -44,7 +47,7 @@ fits <- srrTMB(as.FLSRs(run, models=c("bevholt", "segreg")),
 # PLOT
 plotsrs(fits)
 
-# BOOTSTRAP and SELECT model by largest logLik
+# BOOTSTRAP and SELECT model by largest logLik **
 srpars <- bootstrapSR(run, iters=it,
   models=c("bevholt", "segreg"), method="best")
 
@@ -54,7 +57,7 @@ save(fits, srpars, file="data/bootstrap.rda", compress="xz")
 
 # - CONSTRUCT FLom
 
-# GENERATE future deviances: lognormal autocorrelated
+# GENERATE future deviances: lognormal autocorrelated **
 srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(dy, fy))
 
 plot(srdevs)
@@ -76,7 +79,8 @@ om <- fwd(om, catch=FLQuant(4289.2, dimnames=list(year=2023)))
 # TODO: CALCULATE Fcv, Fphi.
 sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
-# - CONSTRUCT iem, implementation error module w/10% noise
+
+# - CONSTRUCT iem, implementation error module w/10% noise **
 
 iem <- FLiem(method=noise.iem,
   args=list(noise=rlnorm(500, rec(om) %=% 0, 0.1)))

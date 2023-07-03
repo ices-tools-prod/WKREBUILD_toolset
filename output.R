@@ -8,7 +8,6 @@
 
 # TODO: USE names in years list, e.g. list(short=2000:2005, long=2000:2030)
 
-
 library(icesTAF)
 mkdir("output")
 
@@ -26,7 +25,7 @@ runs <- c(runs, F0=FLmse(om=runf0))
 
 # COMPUTE yearly performance statistics
 
-perf_year <- performance(runs, statistics=annualstats, years=2023:2041)
+perf_year <- performance(mses, statistics=annualstats, years=2023:2041)
 
 # COMPUTE performance statistics (2024-2041)
 

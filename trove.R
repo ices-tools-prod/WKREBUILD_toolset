@@ -9,7 +9,16 @@
 
 # --- data.R
 
-# - BOOTSTRAP and SELECT model
+# - Stock-recruitment relationship(s)
+
+# SET future recruitments as random walk from last estimated year
+
+sr(om) <- rwalk(window(rec(om), end=2022), end=fy, sd=0.02, delta=0)
+
+sr(om) <- rwalk(window(rec(om), end=2022), end=fy, sd=0.02, delta=-0.01)
+
+
+# BOOTSTRAP and SELECT model
 
 # based on relative likelihood
 srpars <- bootstrapSR(run, iters=it,
@@ -19,8 +28,9 @@ srpars <- bootstrapSR(run, iters=it,
 srpars <- bootstrapSR(run, iters=it,
   models=c("bevholt", "segreg"), method="loglik")
 
-# - GENERATE future deviances
+# - CONSTRUCT FLom
 
+# GENERATE future deviances
 
 # - CONSTRUCT iem
 
