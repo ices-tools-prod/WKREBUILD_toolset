@@ -13,6 +13,8 @@ library(doFuture)
 options(doFuture.rng.onMisuse="ignore")
 
 if(exists("cores")) {
+  
+  registerDoFuture()
 
   # Linux
   if(os.linux() | os.macos()) {
@@ -21,7 +23,6 @@ if(exists("cores")) {
   } else if(os.windows()) {
     plan(multisession, workers=cores)
   }
-  registerDoFuture()
 }
 
 # SETUP progress bars
