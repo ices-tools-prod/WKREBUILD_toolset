@@ -10,7 +10,7 @@ The required [FLR](https:://flr-project.org) and R packages can be installed in 
 install.packages("icesTAF")
 
 install.packages(icesTAF::deps(), repos=c(
-  FLR="https://flr.r-universe.net",
+  FLR="https://flr.r-universe.dev",
   CRAN="https://cloud.r-project.org/"))
 ```
 
@@ -26,7 +26,7 @@ To setup and use a project library using the tools provided by the icesTAF packa
 icesTAF::draft.software(c("FLCore", ""ggplotFL", "FLFishery", "FLasher", "FLSRTMB", "mse", "mseviz"))
 ```
 
-When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a call following the dependency list
+This will allow top start having a record of what version of the pavckages has been used. When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a series of calls to the FLR packages following the dependency list
 
 ```r
 taf.library(FLCore)
