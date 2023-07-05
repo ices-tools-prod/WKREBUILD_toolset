@@ -27,8 +27,8 @@ load('data/data.rda')
 
 runf0 <- fwd(om, control=fwdControl(year=2024:2042, quant="fbar", value=0))
 
-# SET intermediate year, start of runs
-mseargs <- list(iy=2023, fy=2042, data_lag=1, management_lag=1)
+# SET intermediate year + start of runs, lags and frequency
+mseargs <- list(iy=2023, fy=2042, data_lag=1, management_lag=1, frq=1)
 
 # SETUP standard ICES advice rule
 arule <- mpCtrl(list(
@@ -47,13 +47,18 @@ arule <- mpCtrl(list(
     args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
   ))
 
+# plot HCR
+plot_hockeystick.hcr(arule$hcr, labels=c(lim="Blim", trigger="MSYBtrigger",
+  min="", target="Ftarget")) +
+  xlab("SSB") + ylab(expression(bar(F)))
+
 # - RUN applying ICES advice rule
 system.time(
-mse_arule <- mp(om, iem=iem, ctrl=arule, args=mseargs)
+mse <- mp(om, iem=iem, ctrl=arule, args=mseargs)
 )
 
 # PLOT
-plot(runf0, mse_arule, window=FALSE)
+plot(runf0, mse, window=FALSE)
 
 
 # --- RUNS changing slope and min F (AR_Steep + F below Blim)
@@ -76,8 +81,8 @@ fleetBehaviour(om) <- mseCtrl(method=response.fb, args=list(min=0.90))
 
 # RUN for all options on 'hcr' control element
 system.time(
-mses_fb_opts <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
+mses_fr <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 )
 
 # SAVE
-save(runf0, mses, mses_fb, file="model/model.rda", compress="xz")
+save(runf0, mses_opts, mses_fr, file="model/model.rda", compress="xz")

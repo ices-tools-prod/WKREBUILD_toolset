@@ -164,9 +164,23 @@ fullstats <- list(
   # P(SB < SBlim) at least once
   risk2=list(~yearMeans(iterMeans(((SB/Blim) < 1) > 0)),
     name="once(P(SB<B[limit]))",
-    desc="ICES Risk 2, probability that spawner biomass is above Blim once")
+    desc="ICES Risk 2, probability that spawner biomass is above Blim once"),
+
+  # 1st year
+  firstyear=list(~firstYear(iterMeans(SB/Blim > 1) >= 0.95),
+  name="recovery", desc="First year in which P(SB/SBlim) >= 0.95")
 )
 
+# }}}
+
+# firstyear {{{
+
+# firstYear(iterMeans(SB/Blim > 1) >= 0.95)
+
+firstYear <- function(x) {
+  year <- as.numeric(dimnames(x)$year[match(TRUE, x)])
+  return(FLQuant(year))
+}
 # }}}
 
 # Roxygen template {{{

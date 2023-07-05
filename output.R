@@ -21,25 +21,19 @@ load("model/model.rda")
 
 # ADD runf0 for performance calculations TODO: SIMPLIFY
 
-runs <- c(runs, F0=FLmse(om=runf0))
+mses_opts <- c(mses_opts, F0=FLmse(om=runf0))
 
 # COMPUTE yearly performance statistics
 
-perf_year <- performance(mses, statistics=annualstats, years=2023:2041)
+perf_year <- performance(mses_opts, statistics=annualstats, years=2023:2041)
 
 # COMPUTE performance statistics (2024-2041)
 
-perf <- performance(runs, statistics=stats, years=list(2024:2041))
+perf_all <- performance(mses_opts, statistics=fullstats,
+  years=list(all=2024:2041))
 
-# TODO:
-
-# COMPUTE first year where P(SB>=SBlim) >= 0.95
-perf_year[statistic == 'PBlim', .(PBlim=mean(data)), by=.(year, mp)][PBlim > 0.95, .(first=min(year)), by=mp]
-
-# TODO:
-compute(perf_year, min(year), where=PBlim > 0.95) 
-
-perf_year[statistic == 'PBlim' & year == max(year), mean(data), by=.(mp, year)]
+perf_periods <- performance(mses_opts, statistics=fullstats,
+  years=list(short=2024:2028, medium=2028:2034, long=2034:2041, all=2024:2041))
 
 # mp ~ year | C
 
@@ -48,8 +42,9 @@ dcast(perf_year[statistic == 'C', .(data=mean(data)),
 
 # statistic + mp ~ year
 
-dcast(perf_year[, .(data=mean(data)), by=.(year, mp, name, desc)], name + mp ~ year)
+dcast(perf_year[, .(data=mean(data)), by=.(year, mp, name, desc)],
+  name + mp ~ year)
 
 # SAVE
 
-save(perf_year, perf_end, file="output/output.rda")
+save(perf_year, perf_all, file="output/output.rda", compress="xz")

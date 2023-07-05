@@ -55,7 +55,7 @@ srpars <- bootstrapSR(run, iters=it,
 save(fits, srpars, file="data/bootstrap.rda", compress="xz")
 
 
-# - CONSTRUCT FLom
+# - CONSTRUCT OM
 
 # GENERATE future deviances: lognormal autocorrelated **
 srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(dy, fy))
