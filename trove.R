@@ -7,6 +7,25 @@
 # Distributed under the terms of the EUPL-1.2
 
 
+# --- utilities.R
+
+# PARALLEL setup via doParallel
+
+library(doParallel)
+
+if(exists("cores")) {
+
+  # Linux
+  if(os.linux() | os.macos()) {
+    workers <- makeCluster(cores, type='FORK')
+  # Windows
+  } else if(os.windows()) {
+    workers <- makeCluster(cores, type='PSOCK')
+  }
+  registerDoParallel(cl = workers)
+}
+
+
 # --- data.R
 
 # - Stock-recruitment relationship(s)
