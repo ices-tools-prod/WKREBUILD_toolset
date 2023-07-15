@@ -12,20 +12,19 @@ mkdir("model")
 
 library(mse)
 
-# CHOOSE number of cores for doFuture / doParallel
-cores <- 1
+# CHOOSE number of cores for doFuture
+cores <- 4
 
 source("utilities.R")
-
-# ACTIVATE progressr bar
-handlers(global=TRUE)
 
 # LOAD oem and oem
 load('data/data.rda')
 
-# - RUN for F=0
 
-runf0 <- fwd(om, control=fwdControl(year=2024:2042, quant="fbar", value=0))
+# - RUN for F=0 as reference
+
+runf0 <- fwd(om, control=fwdControl(year=2024:2042, quant="fbar",
+  value=0))
 
 # SET intermediate year + start of runs, lags and frequency
 mseargs <- list(iy=2023, fy=2042, data_lag=1, management_lag=1, frq=1)
@@ -54,14 +53,14 @@ plot_hockeystick.hcr(arule$hcr, labels=c(lim="Blim", trigger="MSYBtrigger",
 
 # - RUN applying ICES advice rule
 system.time(
-mse <- mp(om, iem=iem, ctrl=arule, args=mseargs)
+advice <- mp(om, iem=iem, ctrl=arule, args=mseargs)
 )
 
 # PLOT
-plot(runf0, mse, window=FALSE)
+plot(runf0, advice, window=FALSE)
 
 
-# --- RUNS changing slope and min F (AR_Steep + F below Blim)
+# --- MP runs changing slope and min F (AR_Steep + F below Blim)
 
 # CREATE combinations of lim(Blim) and min(Fmin) values.
 opts <- combinations(
@@ -70,19 +69,19 @@ opts <- combinations(
 
 # RUN for all options on 'hcr' control element
 system.time(
-mses_opts <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
+plans <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 )
 
 
-# --- RUNS with fleet response to TAC decrease, keeps effort at 90%
+# --- MP runs with fleet response to TAC decrease, keeps effort at 90%
 
 # SET fleet behaviour response to TAC, !F_y < 0.90 * F_y-1
 fleetBehaviour(om) <- mseCtrl(method=response.fb, args=list(min=0.90))
 
 # RUN for all options on 'hcr' control element
 system.time(
-mses_fr <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
+plans_fr <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 )
 
 # SAVE
-save(runf0, mses_opts, mses_fr, file="model/model.rda", compress="xz")
+save(runf0, advice, plans, plans_fr, file="model/model.rda", compress="xz")

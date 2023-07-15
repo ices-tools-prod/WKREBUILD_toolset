@@ -14,12 +14,15 @@ library(mse)
 library(FLSRTMB)
 
 # CHOOSE number of cores for doFuture / doParallel
-cores <- 1
+cores <- 2
 
 source("utilities.R")
 
 # ACTIVATE progressr bar
-handlers(global=TRUE)
+# library(progressr)
+# handlers(global=TRUE)
+# handlers("txtprogressbar")
+
 
 # LOAD AAP SA results, 2022 ICES WGNSSK sol.27.4
 load('bootstrap/data/sol274.rda')
@@ -76,7 +79,6 @@ rec(stock(om))[, '2022'] <- rec(om)[1, '2022'] * srdevs[, '2022']
 om <- fwd(om, catch=FLQuant(4289.2, dimnames=list(year=2023)))
 
 # F and SSB deviances
-# TODO: CALCULATE Fcv, Fphi.
 sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 

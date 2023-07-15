@@ -9,12 +9,9 @@
 
 # PARALLEL setup via doFuture
 
-library(doFuture)
-options(doFuture.rng.onMisuse="ignore")
-
 if(exists("cores")) {
   
-  registerDoFuture()
+#  registerDoFuture()
 
   # Linux
   if(os.linux() | os.macos()) {
@@ -24,11 +21,6 @@ if(exists("cores")) {
     plan(multisession, workers=cores)
   }
 }
-
-# SETUP progress bars
-
-library(progressr)
-handlers("txtprogressbar")
 
 # icesControl {{{
 
@@ -205,3 +197,5 @@ firstYear <- function(x) {
 #'
 
 # }}}
+
+

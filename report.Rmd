@@ -15,13 +15,30 @@ opts_chunk$set(
 )
 ```
 
+# Using this repository as template
+
 # Installation
 
-- INSTALL from r-universe and CRAN
+We first proceed to install icesTAF
 
-# NOTE: to remove last year use `window(run, end=-1)`
+```{r}
+install.packages(c("icesTAF")
+```
 
-# [`data.R`](https://github.com/iagomosqueira/WKREBUILD_toolset/blob/main/data.R) - Building an Operating Model
+The most updated versions of some **FLR** packages are required. These can be installed directly from the [FLR R-Universe repository](https://flr.r-universe.dev), as follows.
+
+```{r}
+library(icesTAF)
+
+install.packages(deps(), repos=structure(c(CRAN="https://cloud.r-project.org/",
+  FLR="https://flr.r-universe.dev")))
+```
+
+- NOTE on other packages
+
+# Repository structure
+
+## [`data.R`](https://github.com/iagomosqueira/WKREBUILD_toolset/blob/main/data.R) - Building an Operating Model
 
 - Bootstrap of SRRs
 - Selection method
@@ -66,54 +83,17 @@ This file contains the Operating Model conditioning, limited here to a minimum l
 
 - Generating graphical outputs (`report.R`).
 
-## trove.R
 
 ##  utilities.R
 
+## trove.R
+
+
+# Reproducibility and version control
 
 
 
-```{r, eval=FALSE}
-
-# NOTE: overfishing stock
-run <- fwd(run, sr=rec(run)[, ac(2013:2022)],
-  fbar=fbar(run)[, ac(2013:2022)] * 1.6)
-
-plot(srdevs) +
-  geom_line(aes(y=mean(data)), linetype=2)
-
-## Stock-recruit relationships
-
-aic_srpars <- bootstrapSR(window(run, end=iy - 1), iters=it,
-  models=c("bevholt", "segreg"), method="aic")
-
-loglik_srpars <- bootstrapSR(window(run, end=iy - 1), iters=it,
-  models=c("bevholt", "segreg"), method="loglik")
-
-(plot_bootstrapSR(fits, srpars) + ggtitle("Highest lkhd")) +
-(plot_bootstrapSR(fits, aic_srpars) + ggtitle("Relative lkhd")) +
-(plot_bootstrapSR(fits, loglik_srpars) + ggtitle("logLik probability"))
-
-dat <- rbindlist(list(lkhd=model.frame(srpars), relkhd=model.frame(aic_srpars), prob=model.frame(loglik_srpars)), idcol="method")
-
-dcast(dat[, .(a,b,spr0,logLik,sigmaR,R0,rho,B0,m, method)], method + m ~ ., fun=mean, na.rm=TRUE)
-
-dat <- rbindlist(list(lkhd=as.data.frame(srpars), relkhd=as.data.frame(aic_srpars), prob=as.data.frame(loglik_srpars)), idcol="method")
-
-ggplot(dat[params %in% c('a','b','R0','B0', 'm')], aes(x=data)) +     
-  geom_histogram() +
-  facet_grid(method ~ params, scales='free')
-
-# SELECT by U(0,1) ~ P(model)
-srpars <- bootstrapSR(window(run, end=iy - 1), iters=it,
-  models=c("bevholt", "ricker", "segreg"), method="probability")
-
-# OM from McMC run
-omc <- fwdWindow(FLom(stock=runmc, refpts=refpts, model='mixedsrr',
-  params=srpars, deviances=srdevs), end=fy)
-
-```
-
+# ----
 
 - An OM based on the 2022 AAP stock assessment for sol.27.4 was used for development. The model has been run using ADMB's McMC routine to obtain some variability in population abundance and fishing mortality, solely due to parameter uncertainty.
 

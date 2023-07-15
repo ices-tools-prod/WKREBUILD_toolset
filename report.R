@@ -10,6 +10,7 @@ library(icesTAF)
 mkdir("report")
 
 library(mse)
+library(FLSRTMB)
 library(mseviz)
 library(patchwork)
 library(scales)
@@ -34,70 +35,69 @@ dev.off()
 
 load('data/data.rda')
 
-pubpng("report/om_metrics.png",
+taf.png("report/om_metrics.png")
 plot(window(om, end=2023)) +
-  ggtitle("sol.27.4 OM + high F")
-)
+  ggtitle("sol.27.4 OM")
+dev.off()
 
 # OM /refpts
-pubpng("report/om_icesmetrics.png",
+taf.png("report/om_icesmetrics.png")
 plot(window(om, end=2023), metrics=icesmetrics) +
-  ggtitle("sol.27.4 OM + high F") +
+  ggtitle("sol.27.4 OM") +
   geom_hline(yintercept=1, linetype=2)
-)
+dev.off()
 
-plot(window(om, end=2023), runs[1:3], metrics=icesmetrics) +
-  ggtitle("sol.27.4 OM + high F") +
-  geom_hline(yintercept=1, linetype=2)
 
 # --- MPs (model.R)
 
-load("model/model_runs.rda")
+load("model/model.rda")
 
 # BASELINE run: F=0
-pubpng("report/run_f0.png",
+taf.png("report/run_f0.png")
 plot(runf0) +
   geom_vline(xintercept=2023, linetype=3)
-)
+dev.off()
 
 # PLOT RUNS
-pubpng("report/runs.png",
-plot(runf0, runs, window=FALSE) +
+taf.png("report/plans.png")
+plot(runf0, plans, window=FALSE) +
   geom_vline(xintercept=2023, linetype=3)
-)
+dev.off()
 
-pubpng("report/runs_hcrs.png",
-Reduce('+', lapply(names(runs)[1:4], function(x)
-  plot_hockeystick.hcr(control(runs[[x]])$hcr,
+taf.png("report/plans_fr.png")
+plot(runf0, plans_fr, window=FALSE) +
+  geom_vline(xintercept=2023, linetype=3)
+dev.off()
+
+# PLOT HCRs
+taf.png("report/runs_hcrs.png")
+Reduce('+', Map(function(x, y)
+  plot_hockeystick.hcr(control(x)$hcr,
   labels=c(trigger="Btrigger", target="Ftarget")) +
   xlab("SSB") + ylab(expression(bar(F))) +
-  ggtitle(x)))
-)
-
+  ggtitle(y), x=plans[1:4], y=names(plans[1:4])))
+dev.off()
 
 # --- Performance (output.R)
 
 load("output/output.rda")
 
 # PLOT long term performance
+taf.png("report/perf_bps.png")
+plotBPs(perf[year=='all']) + ylim(c(0, NA))
+dev.off()
 
-pubpng("report/perf_bps.png",
-plotBPs(perf_end) + ylim(c(0, NA))
-)
+plotBPs(perf[year=='short'], statistics=c("AAVC", "C", "risk2")) +
+  ylim(c(0, NA))
+
+plotBPs(perf[year=='medium'], statistics=c("AAVC", "C", "risk2")) +
+  ylim(c(0, NA))
 
 # PLOT trade-offs
 
-pubpng("report/perf_tos.png",
-plotTOs(perf_end, x="C", y=c("AAVC", "PBlim"))
-)
-
-# First year where P(B>Blim) > 95% by MP
-
-perf_year[statistic == "PBlim" & data > 0.95, .SD[1], by=mp]
-
-# First year where P(B>Btrigger) > 50% by MP
-
-perf_year[statistic == "PBtrigger" & data > 0.50, .SD[1], by=mp]
+taf.png("report/perf_tos.png")
+plotTOs(perf[year=='short'], x="C", y=c("AAVC", "risk2"))
+dev.off()
 
 # PLOT PBlim by year and mp
 
@@ -123,4 +123,4 @@ ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
 
 # RENDER report.Rmd
 
-rmarkdown::render("report.Rmd", output_dir="report")
+# rmarkdown::render("report.Rmd", output_dir="report")

@@ -1,4 +1,4 @@
-# output.R - Performance evaluation
+# output.R - Performance evaluation and output tables
 # WKREBUILD_toolset/output.R
 
 # Copyright (c) WUR, 2023.
@@ -6,7 +6,6 @@
 #
 # Distributed under the terms of the EUPL-1.2
 
-# TODO: USE names in years list, e.g. list(short=2000:2005, long=2000:2030)
 
 library(icesTAF)
 mkdir("output")
@@ -19,32 +18,41 @@ source("utilities.R")
 
 load("model/model.rda")
 
-# ADD runf0 for performance calculations TODO: SIMPLIFY
+# COMPUTE yearly performance statistics, ADD F0 as reference
 
-mses_opts <- c(mses_opts, F0=FLmse(om=runf0))
+perf_year <- performance(c(plans, F0=runf0), statistics=annualstats,
+  years=2023:2041)
 
-# COMPUTE yearly performance statistics
+# COMPUTE performance statistics by periods
 
-perf_year <- performance(mses_opts, statistics=annualstats, years=2023:2041)
-
-# COMPUTE performance statistics (2024-2041)
-
-perf_all <- performance(mses_opts, statistics=fullstats,
-  years=list(all=2024:2041))
-
-perf_periods <- performance(mses_opts, statistics=fullstats,
+perf <- performance(c(plans, F0=runf0), statistics=fullstats,
   years=list(short=2024:2028, medium=2028:2034, long=2034:2041, all=2024:2041))
 
-# mp ~ year | C
 
-dcast(perf_year[statistic == 'C', .(data=mean(data)),
-  by=.(year, mp, name, desc)], mp ~ year)
+# --- TABLES
 
-# statistic + mp ~ year
+tables <- list()
 
-dcast(perf_year[, .(data=mean(data)), by=.(year, mp, name, desc)],
-  name + mp ~ year)
+# WHEN does stock recover (P(SB>Blim) >= 95%) by mp?
+
+tables$recovery <- perf_year[statistic == "PBlim" & data > 0.95, .SD[1], 
+  by=mp][order(year),]
+
+# WHEN is P(B>Btrigger) > 50% by mp?
+
+tables$status <- perf_year[statistic == "PBtrigger" & data > 0.50, .SD[1],
+  by=mp]
+
+# CREATE table of catch by mp and year (mp ~ year | C)
+
+tables$catch_mp <- dcast(perf_year[statistic == 'C', .(data=mean(data)),
+  by=.(year, mp, name, desc)], mp ~ year, value.var='data')
+
+# CREATE table of all statistics by mp and year (statistic + mp ~ year)
+
+tables$stats_mp <- dcast(perf_year[, .(data=mean(data)),
+  by=.(year, mp, name, desc)], name + mp ~ year, value.var='data')
 
 # SAVE
 
-save(perf_year, perf_all, file="output/output.rda", compress="xz")
+save(perf_year, perf, tables, file="output/output.rda", compress="xz")
