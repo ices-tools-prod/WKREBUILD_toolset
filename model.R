@@ -64,8 +64,8 @@ plot(runf0, advice, window=FALSE)
 
 # CREATE combinations of lim(Blim) and min(Fmin) values.
 opts <- combinations(
-  lim=seq(0, c(refpts(om)$Btrigger) * 0.50, length=4),
-  min=seq(0, 0.10, length=4))
+  lim=seq(0, c(refpts(om)$Btrigger) * 0.50, length=3),
+  min=c(0, 0.05))
 
 # RUN for all options on 'hcr' control element
 system.time(

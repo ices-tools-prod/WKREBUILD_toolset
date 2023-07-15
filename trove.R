@@ -7,6 +7,14 @@
 # Distributed under the terms of the EUPL-1.2
 
 
+# SETUP progress bar
+
+library(progressr)
+
+handlers(global=TRUE)
+handlers("txtprogressbar")
+
+
 # --- utilities.R
 
 # PARALLEL setup via doParallel

@@ -18,12 +18,6 @@ cores <- 2
 
 source("utilities.R")
 
-# ACTIVATE progressr bar
-# library(progressr)
-# handlers(global=TRUE)
-# handlers("txtprogressbar")
-
-
 # LOAD AAP SA results, 2022 ICES WGNSSK sol.27.4
 load('bootstrap/data/sol274.rda')
 

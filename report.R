@@ -12,7 +12,6 @@ mkdir("report")
 library(mse)
 library(FLSRTMB)
 library(mseviz)
-library(patchwork)
 library(scales)
 
 source("utilities.R")

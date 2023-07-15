@@ -26,7 +26,11 @@ To setup and use a project library using the tools provided by the icesTAF packa
 icesTAF::draft.software(c("FLCore", ""ggplotFL", "FLFishery", "FLasher", "FLSRTMB", "mse", "mseviz"))
 ```
 
-This will allow top start having a record of what version of the pavckages has been used. When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a series of calls to the FLR packages following the dependency list
+This will allow top start having a record of what version of the packages has been used.
+
+An example SOFTWARE.bib file is present as `bootstrap/_SOFTWARE.bib`, but links to the most recent version of the packages, rather than an individual one. Rename to `SOFTWARE.bib` correct name to use it in `taf.boot()`.
+
+When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a series of calls to the FLR packages following the dependency list
 
 ```r
 taf.library(FLCore)
@@ -40,9 +44,16 @@ taf.library(mseviz)
 
 If packages are updated while working on the analysis, remember to update the relevant entry in `SOFTWARE.bib`.
 
+
+```r
+library(progressr)
+handlers(global=TRUE)
+handlers("txtprogressbar")
+```
+
 ## How to create a repository using this template
 
-A new repository can created using this one as a template by [following a series of steps](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template). The repository will contain a series of R scripts following the [TAF](https://www.ices.dk/data/assessment-tools/Pages/transparent-assessment-framework.aspx) format, setup for analysing recovery plans for a single stock.
+A new repository can be created using this one as a template by [following a series of steps](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template). The repository will contain a series of R scripts following the [TAF](https://www.ices.dk/data/assessment-tools/Pages/transparent-assessment-framework.aspx) format, setup for analysing recovery plans for a single stock.
 
 ## Repository description
 

@@ -11,8 +11,6 @@
 
 if(exists("cores")) {
   
-#  registerDoFuture()
-
   # Linux
   if(os.linux() | os.macos()) {
     plan(multicore, workers=cores)
@@ -98,21 +96,6 @@ icesControl <- function(SSBdevs, Fdevs, Btrigger, Ftarget, Blim=0, Fmin=0,
 } 
 # }}}
 
-# shortcut_devs {{{
-
-# GET new Fphi, Fcv values.
-
-shortcut_devs <- function(om, Fcv=0.212, Fphi=0.423, SSBcv=0, SSBphi=0) {
-  
-  devs <- FLQuants(
-    F=ar1rlnorm(Fphi, dimnames(om)$year, dims(om)$iter, 0, Fcv),
-    SSB=ar1rlnorm(0, dimnames(om)$year, dims(om)$iter, 0, SSBcv)
-  )
-
-  return(devs)
-}
-# }}}
-
 # icesmetrics {{{
 
 # NAME = function ~ refpt, e.g. FMSY = fbar(om) / refpts(om)$Fmsy
@@ -122,7 +105,7 @@ icesmetrics <- list(FMSY=fbar~Fmsy, SBMSY=ssb~Btrigger,
 
 # }}}
 
-# performance statistics {{{
+# WKREBUILD2 performance statistics {{{
 
 annualstats <- list(
 
@@ -191,11 +174,9 @@ firstYear <- function(x) {
 #' @aliases FUNCTION
 #'
 #' @author WMR (2023)
-#' @seealso [FL-class] [function()] [pkg::function()]
+#' @seealso [FL-class] [function()]
 #' @keywords classes
 #' @examples
 #'
 
 # }}}
-
-
