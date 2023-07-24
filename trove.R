@@ -23,6 +23,8 @@ handlers("txtprogressbar")
 
 sr(om) <- rwalk(window(rec(om), end=2022), end=fy, sd=0.02, delta=0)
 
+# with negative drift
+
 sr(om) <- rwalk(window(rec(om), end=2022), end=fy, sd=0.02, delta=-0.01)
 
 
@@ -42,7 +44,7 @@ srpars <- bootstrapSR(run, iters=it,
 
 # SETUP om future: use mean of last 5 years but resample 'wt' slots
 
-om <- fwdWindow(om, end=fy, nsq=5, fun=c("mean", wt="sample"))
+om <- fwdWindow(window(om, end=2023), end=fy, nsq=5, fun=c("mean", wt="sample"))
 
 # - CONSTRUCT iem
 
