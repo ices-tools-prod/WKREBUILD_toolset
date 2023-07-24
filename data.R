@@ -14,7 +14,7 @@ library(mse)
 library(FLSRTMB)
 
 # CHOOSE number of cores for doFuture / doParallel
-cores <- 2
+cores <- 3
 
 source("utilities.R")
 
@@ -63,7 +63,7 @@ plot(srdevs)
 om <- FLom(stock=propagate(run, it), refpts=refpts, model='mixedsrr',
   params=srpars, deviances=srdevs)
 
-# SETUP om future
+# SETUP om future: average of last 3 years **
 om <- fwdWindow(om, end=fy)
 
 # SET stochastic rec dy
@@ -85,3 +85,5 @@ iem <- FLiem(method=noise.iem,
 # - SAVE
 
 save(om, iem, sdevs, file="data/data.rda", compress="xz")
+
+plan(sequential)

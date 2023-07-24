@@ -15,25 +15,6 @@ handlers(global=TRUE)
 handlers("txtprogressbar")
 
 
-# --- utilities.R
-
-# PARALLEL setup via doParallel
-
-library(doParallel)
-
-if(exists("cores")) {
-
-  # Linux
-  if(os.linux() | os.macos()) {
-    workers <- makeCluster(cores, type='FORK')
-  # Windows
-  } else if(os.windows()) {
-    workers <- makeCluster(cores, type='PSOCK')
-  }
-  registerDoParallel(cl = workers)
-}
-
-
 # --- data.R
 
 # - Stock-recruitment relationship(s)
@@ -58,6 +39,10 @@ srpars <- bootstrapSR(run, iters=it,
 # - CONSTRUCT FLom
 
 # GENERATE future deviances
+
+# SETUP om future: use mean of last 5 years but resample 'wt' slots
+
+om <- fwdWindow(om, end=fy, nsq=5, fun=c("mean", wt="sample"))
 
 # - CONSTRUCT iem
 

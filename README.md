@@ -1,10 +1,10 @@
 # WKREBUILD2 FLR toolset
 
-This repository contains a template analysis using FLR-based tools for the evaluation of recovery plans for ICES stocks.
+This repository contains a template for an analysis using FLR-based tools for the evaluation of recovery plans for ICES stocks.
 
 ## Installation
 
-The required [FLR](https:://flr-project.org) and R packages can be installed in the standard R library by calling:
+The required [FLR](https:://flr-project.org) packages, and all their dependencies, can be installed in the standard R library by calling:
 
 ``` r
 install.packages("icesTAF")
@@ -14,11 +14,43 @@ install.packages(icesTAF::deps(), repos=c(
   CRAN="https://cloud.r-project.org/"))
 ```
 
-or from the source code in the [FLR github repositories](https://github.com/flr)
+They can also be installed from the source code in the [FLR github repositories](https://github.com/flr) by calling
 
 ```r
 remotes::install_github(paste0("flr/", c("FLCore", ""ggplotFL", "FLFishery", "FLasher", "FLSRTMB", "mse", "mseviz")))
 ```
+
+## Running the code
+
+Once the repository has been cloned, only two steps are necessary to test run the example code, once `icesTAF` has been loaded
+
+```r
+library(icesTAF)
+
+# RUN the repository bootstrap steps (data)
+taf.bootstrap()
+
+# SOURCE all R scripts in order
+make.all()
+```
+
+### Progress reporting
+
+The [mse](https://flr-project.org/mse) package allows setting up notifications of process on long computations through [progressr](https://progressr.futureverse.org/). You can request a progress bar to be shown for the calls to the `mp()` and `mps()` functions in this way
+
+```r
+library(progressr)
+handlers(global=TRUE)
+handlers("txtprogressbar")
+```
+
+### Parallelization
+
+Calls to various functions in the [mse](https://flr-project.org/mse) package (`,mp` and `mps`), and in [mse](https://flr-project.org/mse)
+Both the mse
+
+
+## Setup a full TAF repository
 
 To setup and use a project library using the tools provided by the icesTAF package, the `bootstrap/SOFTWARE.bib` file can be created by calling
 
@@ -33,23 +65,10 @@ An example SOFTWARE.bib file is present as `bootstrap/_SOFTWARE.bib`, but links 
 When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a series of calls to the FLR packages following the dependency list
 
 ```r
-taf.library(FLCore)
-taf.library(ggplotFL)
-taf.library(FLFishery)
-taf.library(FLasher)
-taf.library(FLSRTMB)
-taf.library(mse)
-taf.library(mseviz)
+taf.libraries()
 ```
 
 If packages are updated while working on the analysis, remember to update the relevant entry in `SOFTWARE.bib`.
-
-
-```r
-library(progressr)
-handlers(global=TRUE)
-handlers("txtprogressbar")
-```
 
 ## How to create a repository using this template
 
@@ -89,3 +108,20 @@ A new repository should contain the following folder and tree structure, which i
 ## Getting help
 
 - Problems or questions about the toolset are better reported as an [issue in this repository](https://github.com/iagomosqueira/WKREBUILD_toolset/issues).
+
+
+
+## Tests
+
+- R.4.3.1, Linux
+  - `plan(sequential)`: 
+  - `plan(multicore, workers=4)`: 
+  - `plan(multicore, workers=6)`: 
+  - `plan(multisession, workers=4)`:
+
+- R.4.3.1, Windows
+  - `plan(sequential)`: 
+  - `plan(multisession, workers=4)`: 
+
+
+plan(cluster, workers=rep("10.90.3.115", 6))

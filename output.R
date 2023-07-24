@@ -38,6 +38,8 @@ tables <- list()
 tables$recovery <- perf_year[statistic == "PBlim" & data > 0.95, .SD[1], 
   by=mp][order(year),]
 
+perf[statistic=='firstyear' & year == 'all', data, by=.(mp)][order(data),]
+
 # WHEN is P(B>Btrigger) > 50% by mp?
 
 tables$status <- perf_year[statistic == "PBtrigger" & data > 0.50, .SD[1],

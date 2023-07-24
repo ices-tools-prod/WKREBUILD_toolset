@@ -13,7 +13,7 @@ mkdir("model")
 library(mse)
 
 # CHOOSE number of cores for doFuture
-cores <- 4
+cores <- 3
 
 source("utilities.R")
 
@@ -25,6 +25,8 @@ load('data/data.rda')
 
 runf0 <- fwd(om, control=fwdControl(year=2024:2042, quant="fbar",
   value=0))
+
+# - SET UP MP runs
 
 # SET intermediate year + start of runs, lags and frequency
 mseargs <- list(iy=2023, fy=2042, data_lag=1, management_lag=1, frq=1)
@@ -53,7 +55,7 @@ plot_hockeystick.hcr(arule$hcr, labels=c(lim="Blim", trigger="MSYBtrigger",
 
 # - RUN applying ICES advice rule
 system.time(
-advice <- mp(om, iem=iem, ctrl=arule, args=mseargs)
+  advice <- mp(om, iem=iem, ctrl=arule, args=mseargs, parallel=4)
 )
 
 # PLOT
@@ -69,7 +71,7 @@ opts <- combinations(
 
 # RUN for all options on 'hcr' control element
 system.time(
-plans <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
+  plans <- mps(window(om, start=2020), ctrl=arule, args=mseargs, hcr=opts)
 )
 
 
@@ -80,8 +82,13 @@ fleetBehaviour(om) <- mseCtrl(method=response.fb, args=list(min=0.90))
 
 # RUN for all options on 'hcr' control element
 system.time(
-plans_fr <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
+  plans_fr <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 )
 
-# SAVE
+
+# --- SAVE
+
 save(runf0, advice, plans, plans_fr, file="model/model.rda", compress="xz")
+
+# CLOSE cluster
+plan(sequential)
