@@ -22,11 +22,11 @@ source("utilities.R")
 
 load('data/bootstrap.rda')
 
-taf.png(file="report/data_srrfits.png")
+taf.png(file="data_srrfits.png")
 plotsrs(fits)
 dev.off()
 
-taf.png(file="report/data_srbootstrap.png", width=1400)
+taf.png(file="data_srbootstrap.png", width=1400)
 plot_bootstrapSR(fits, srpars)
 dev.off()
 
@@ -34,13 +34,13 @@ dev.off()
 
 load('data/data.rda')
 
-taf.png("report/om_metrics.png")
+taf.png("om_metrics.png")
 plot(window(om, end=2023)) +
   ggtitle("sol.27.4 OM")
 dev.off()
 
 # OM /refpts
-taf.png("report/om_icesmetrics.png")
+taf.png("om_icesmetrics.png")
 plot(window(om, end=2023), metrics=icesmetrics) +
   ggtitle("sol.27.4 OM") +
   geom_hline(yintercept=1, linetype=2)
@@ -52,24 +52,30 @@ dev.off()
 load("model/model.rda")
 
 # BASELINE run: F=0
-taf.png("report/run_f0.png")
+taf.png("run_f0.png")
 plot(runf0) +
   geom_vline(xintercept=2023, linetype=3)
 dev.off()
 
+# ADVICE rule run
+taf.png("model_advice_relative.png")
+plot(om, advice_runs, metrics=icesmetrics) +
+  geom_hline(yintercept=1, linetype=2, alpha=0.5)
+dev.off()
+
 # PLOT RUNS
-taf.png("report/plans.png")
+taf.png("plans.png")
 plot(runf0, plans, window=FALSE) +
   geom_vline(xintercept=2023, linetype=3)
 dev.off()
 
-taf.png("report/plans_fr.png")
+taf.png("plans_fr.png")
 plot(runf0, plans_fr, window=FALSE) +
   geom_vline(xintercept=2023, linetype=3)
 dev.off()
 
 # PLOT HCRs
-taf.png("report/runs_hcrs.png")
+taf.png("runs_hcrs.png")
 Reduce('+', Map(function(x, y)
   plot_hockeystick.hcr(control(x)$hcr,
   labels=c(trigger="Btrigger", target="Ftarget")) +
@@ -82,7 +88,7 @@ dev.off()
 load("output/output.rda")
 
 # PLOT long term performance
-taf.png("report/perf_bps.png")
+taf.png("perf_bps.png")
 plotBPs(perf[year=='all']) + ylim(c(0, NA))
 dev.off()
 
@@ -94,7 +100,7 @@ plotBPs(perf[year=='medium'], statistics=c("AAVC", "C", "risk2")) +
 
 # PLOT trade-offs
 
-taf.png("report/perf_tos.png")
+taf.png("perf_tos.png")
 plotTOs(perf[year=='short'], x="C", y=c("AAVC", "risk2"))
 dev.off()
 
@@ -102,7 +108,7 @@ dev.off()
 
 dat <- perf_year[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
 
-pubpng("report/perf_pblim_mp.png",
+pubpng("perf_pblim_mp.png",
 ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
   geom_line(linewidth=0.5) +
   geom_point(size=4, colour="white") + geom_point(size=2) +
@@ -113,7 +119,7 @@ ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
 
 dat <- perf_year[statistic == "PBtrigger", .(PBtrigger=mean(data)), by=.(mp, year)]
 
-pubpng("report/perf_pbtrigger_mp.png",
+pubpng("perf_pbtrigger_mp.png",
 ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
   geom_line(linewidth=0.5) +
   geom_point(size=4, colour="white") + geom_point(size=2) +

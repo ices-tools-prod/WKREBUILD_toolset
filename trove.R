@@ -17,6 +17,8 @@ handlers("txtprogressbar")
 
 # --- data.R
 
+fy <- 2042
+
 # - Stock-recruitment relationship(s)
 
 # SET future recruitments as random walk from last estimated year
@@ -59,6 +61,24 @@ iem <- FLiem(method=noise.iem, args=list(noise=overshoot))
 
 iem <- FLiem(method=response.iem)
 
+# - MULTIPLE OMs
+
+oms <- list(
+  # 3 year mean
+  mean3y=fwdWindow(window(om, end=2023), end=fy, nsq=3, fun=c("mean")),
+  # wts resampled over last 10 years
+  sampwt=fwdWindow(window(om, end=2023), end=fy, nsq=3,
+    fun=c("mean", wt="sample"), year=c(wt=10)))
+
+library(future.apply)
+plan(multicore, workers=2)
+
+with_progress(
+advice_runs <- future_lapply(oms, mp, iem=iem, ctrl=arule, args=mseargs,
+  future.seed=NULL)
+)
+
+plan(sequential)
 
 # --- model.R
 

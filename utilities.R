@@ -17,7 +17,9 @@ if(exists("cores")) {
   } else if(os.windows()) {
     plan(multisession, workers=cores)
   }
+  options(doFuture.rng.onMisuse="ignore")
 }
+
 
 # icesmetrics {{{
 

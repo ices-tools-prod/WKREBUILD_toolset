@@ -55,7 +55,7 @@ plot_hockeystick.hcr(arule$hcr, labels=c(lim="Blim", trigger="MSYBtrigger",
 
 # - RUN applying ICES advice rule
 system.time(
-  advice <- mp(om, iem=iem, ctrl=arule, args=mseargs, parallel=4)
+  advice <- mp(om, iem=iem, ctrl=arule, args=mseargs)
 )
 
 # PLOT

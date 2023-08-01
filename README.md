@@ -41,7 +41,7 @@ The [mse](https://flr-project.org/mse) package allows setting up notifications o
 ```r
 library(progressr)
 handlers(global=TRUE)
-handlers("txtprogressbar")
+handlers("progress")
 ```
 
 ### Parallelization
