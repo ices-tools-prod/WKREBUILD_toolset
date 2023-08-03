@@ -83,3 +83,51 @@ firstYear <- function(x) {
   return(FLQuant(year))
 }
 # }}}
+
+# decisions {{{
+
+decisions <- function(x, year=1, iter=NULL) {
+
+  trac <- tracking(x)
+
+  year <- as.numeric(year)
+
+  if(is.null(iter))
+    iter <- seq(dims(x)$iter)
+
+  .table <- function(d) {
+
+    its <- dims(d)$iter
+    dmns <- dimnames(d)
+
+    if(its == 1) {
+    data.frame(metric=dmns$metric, year=dmns$year, value=prettyNum(d))
+    } else {
+      data.frame(metric=dmns$metric, year=dmns$year,
+        value=sprintf("%s (%s)", 
+          prettyNum(apply(d, 1:5, median, na.rm=TRUE)),
+          prettyNum(apply(d, 1:5, mad, na.rm=TRUE))))
+    }
+  }
+
+  res <- lapply(year, function(y) {
+  
+    ay  <-  y
+    dy <- ay - 1
+    my  <- ay + 1
+
+    dmet <- c("SB.om", "SB.obs", "SB.est")
+    amet <- c("met.hcr", "decision.hcr", "fbar.hcr", "hcr", "fbar.isys", "isys",
+      "fwd", "C.om")
+
+    dout <- trac[dmet, ac(dy),,,, iter]
+    aout <- trac[amet, ac(ay),,,, iter]
+    mout <- trac["SB.om", ac(my),,,,iter] / trac["SB.om", ac(ay),,,,iter]
+    dimnames(mout)$metric <- "diff(SB.om)"
+
+    rbind(.table(dout), .table(aout), .table(mout))      
+  })
+
+  do.call(cbind, res)
+}
+# }}}
