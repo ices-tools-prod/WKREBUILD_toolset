@@ -10,13 +10,7 @@
 # PARALLEL setup via doFuture
 
 if(exists("cores")) {
-  # Linux
-  if(os.linux() | os.macos()) {
-    plan(multicore, workers=cores)
-  # Windows
-  } else if(os.windows()) {
-    plan(multisession, workers=cores)
-  }
+  plan(multisession, workers=cores)
   options(doFuture.rng.onMisuse="ignore")
 }
 
@@ -89,6 +83,7 @@ firstYear <- function(x) {
 decisions <- function(x, year=1, iter=NULL) {
 
   trac <- tracking(x)
+  args <- args(x)
 
   year <- as.numeric(year)
 
@@ -113,8 +108,8 @@ decisions <- function(x, year=1, iter=NULL) {
   res <- lapply(year, function(y) {
   
     ay  <-  y
-    dy <- ay - 1
-    my  <- ay + 1
+    dy <- ay - args$data_lag
+    my  <- ay + args$management_lag
 
     dmet <- c("SB.om", "SB.obs", "SB.est")
     amet <- c("met.hcr", "decision.hcr", "fbar.hcr", "hcr", "fbar.isys", "isys",
