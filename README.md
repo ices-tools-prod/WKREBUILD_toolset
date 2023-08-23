@@ -22,7 +22,7 @@ remotes::install_github(paste0("flr/", c("FLCore", ""ggplotFL", "FLFishery", "FL
 
 ## Running the code
 
-Once the repository has been cloned, only two steps are necessary to test run the example code, once `icesTAF` has been loaded
+Once the repository has been cloned, only two steps are necessary to test run the example code, once `icesTAF` has been loaded:
 
 ```r
 library(icesTAF)
@@ -46,9 +46,11 @@ handlers("progress")
 
 ### Parallelization
 
-Calls to various functions in the [mse](https://flr-project.org/mse) package (`,mp` and `mps`), and in [mse](https://flr-project.org/mse)
-Both the mse
+Calls to various functions in the [mse](https://flr-project.org/mse) package (`mp` and `mps`) can be speeded-up through parallelization. For a single `mp()` call, iterations are split in blocks across the number of cores available. In the case of `mps()`, each procedure is executed in a separate process across the available cores.
 
+If the `cores` variable is defined in `data.R` or 'model.R', the call to [plan()](https://future.futureverse.org/reference/plan.html) in `utilities.R` will set up a 'multisession' plan. Please refer to the `plan` help page for further information.
+
+The number of cores to use should be chosen by considering the available memory. Performance will be poor if too many cores are trying to use too little memory.
 
 ## Setup a full TAF repository
 
@@ -60,9 +62,9 @@ icesTAF::draft.software(c("FLCore", ""ggplotFL", "FLFishery", "FLasher", "FLSRTM
 
 This will allow top start having a record of what version of the packages has been used.
 
-An example SOFTWARE.bib file is present as `bootstrap/_SOFTWARE.bib`, but links to the most recent version of the packages, rather than an individual one. Rename to `SOFTWARE.bib` correct name to use it in `taf.boot()`.
+An example SOFTWARE.bib file is present as `bootstrap/_SOFTWARE.bib`, but links to the most recent version of the packages, rather than an individual one.
 
-When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a series of calls to the FLR packages following the dependency list
+When using the TAF package library, calls to `library(mse)` in the repository scripts should be substituted by a call to
 
 ```r
 taf.libraries()
@@ -97,6 +99,9 @@ A new repository should contain the following folder and tree structure, which i
 ## Setting up for a new stock
 
 - Place a file, or files, containing the stock assessment results and reference points in `bootstrap/initial/data`.
+
+  - rda, refpts
+
 - Adapt the contents of `DATA.bib` file to match the stock and data file.
 - Call `icesTAF::taf.boot()` to get data files places in `bootstrap/data`.
 - Inspect and adapt each R script file.
@@ -109,19 +114,32 @@ A new repository should contain the following folder and tree structure, which i
 
 - Problems or questions about the toolset are better reported as an [issue in this repository](https://github.com/iagomosqueira/WKREBUILD_toolset/issues).
 
+- To inspect the code of S4 methods defined for the FLR classes, the following sequence could be used
 
+```r
+# WHAT gets called when we run (data.R:67)?
+om <- fwdWindow(om, end=fy)
 
-## Tests
+# TYPE a function name to see if it is a method
+fwdWindow
 
-- R.4.3.1, Linux
-  - `plan(sequential)`: 
-  - `plan(multicore, workers=4)`: 
-  - `plan(multicore, workers=6)`: 
-  - `plan(multisession, workers=4)`:
+# SHOW all methods defined for this function
+showMethods('fwdWindow')
 
-- R.4.3.1, Windows
-  - `plan(sequential)`: 
-  - `plan(multisession, workers=4)`: 
+# CHECK classes of input, y is 'missing'
+is(om)
 
+# GET the method for the required class signature
+getMethod('fwdWindow', c('FLom', 'missing'))
 
-plan(cluster, workers=rep("10.90.3.115", 6))
+```
+
+- To debug S4 methods, a call to trace with the following arguments, works as a call to `debug()` on a function
+
+```
+# TO DEBUG fwdWindow for 'FLom'
+trace("fwdWindow", browser, exit=browser, signature=c('FLom', 'missing'))
+
+# TO STOP debugging
+untrace("fwdWindow", signature=c('FLom', 'missing'))
+```

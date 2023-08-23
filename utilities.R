@@ -55,6 +55,11 @@ fullstats <- list(
   # AVVC
   AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
     name="AAV(C)", desc="Average annual variability in catch"),
+  
+  # IACC
+  IACC=list(~100 * yearSums(abs(C[, -1] - C[, -dim(C)[2]]))/yearSums(C),
+    name="IAC(C)",
+    desc="Percentage inter-annual change in catch"),
 
   # P(SB < SBlim) at least once
   risk2=list(~yearMeans(iterMeans(((SB/Blim) < 1) > 0)),
@@ -126,3 +131,6 @@ decisions <- function(x, year=1, iter=NULL) {
   do.call(cbind, res)
 }
 # }}}
+
+
+# TODO: CODE showMethod

@@ -20,10 +20,9 @@ source("utilities.R")
 # LOAD oem and oem
 load('data/data.rda')
 
-
 # - RUN for F=0 as reference
 
-runf0 <- fwd(om, control=fwdControl(year=2024:2042, quant="fbar",
+runf0 <- fwd(om, control=fwdControl(year=seq(2024, 2042), quant="fbar",
   value=0))
 
 # - SET UP MP runs
@@ -51,7 +50,7 @@ arule <- mpCtrl(list(
 # plot HCR
 plot_hockeystick.hcr(arule$hcr, labels=c(lim="Blim", trigger="MSYBtrigger",
   min="", target="Ftarget")) +
-  xlab("SSB") + ylab(expression(bar(F)))
+  xlab(expression(hat(SSB))) + ylab(expression(bar(F)))
 
 # - RUN applying ICES advice rule
 system.time(

@@ -55,6 +55,15 @@ tables$catch_mp <- dcast(perf_year[statistic == 'C', .(data=mean(data)),
 tables$stats_mp <- dcast(perf_year[, .(data=mean(data)),
   by=.(year, mp, name, desc)], name + mp ~ year, value.var='data')
 
+
+# --- TRACK decisions (EXAMPLES)
+
+# TRACK decision for a single iter and year
+decisions(advice, year=2024, iter=1)
+
+# TRACk decisions for multiple years and all iters
+decisions(advice, year=2024:2025)
+
 # SAVE
 
 save(perf_year, perf, tables, file="output/output.rda", compress="xz")

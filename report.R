@@ -59,7 +59,7 @@ dev.off()
 
 # ADVICE rule run
 taf.png("model_advice_relative.png")
-plot(om, advice_runs, metrics=icesmetrics) +
+plot(om, advice, metrics=icesmetrics) +
   geom_hline(yintercept=1, linetype=2, alpha=0.5)
 dev.off()
 
@@ -90,6 +90,7 @@ load("output/output.rda")
 # PLOT long term performance
 taf.png("perf_bps.png")
 plotBPs(perf[year=='all']) + ylim(c(0, NA))
+plotBPs(perf[year=='long']) + ylim(c(0, NA))
 dev.off()
 
 plotBPs(perf[year=='short'], statistics=c("AAVC", "C", "risk2")) +
