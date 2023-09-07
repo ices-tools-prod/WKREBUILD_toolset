@@ -82,11 +82,6 @@ plan(sequential)
 
 # --- model.R
 
-# CONSTRUCT advice rule using icesControl
-
-arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
-  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
-
 
 # --- output.R
 

@@ -74,6 +74,21 @@ system.time(
 )
 
 
+# --- MP runs with TAC change limits
+
+#
+args(arule$isys, c('dtaclow', 'dtacupp')) <- c(0.85, 1.15)
+args(arule$isys)[c('dtaclow', 'dtacupp')] <- c(0.85, 1.15)
+debug(arule, 'isys')
+
+lims <- mp(om, iem=iem, ctrl=arule, args=mseargs)
+
+# RUN for all options on 'hcr' control element
+system.time(
+  plans <- mps(window(om, start=2020), ctrl=arule, args=mseargs, hcr=opts)
+)
+
+
 # --- MP runs with fleet response to TAC decrease, keeps effort at 90%
 
 # SET fleet behaviour response to TAC, !F_y < 0.90 * F_y-1

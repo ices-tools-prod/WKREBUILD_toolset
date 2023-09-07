@@ -159,21 +159,7 @@ rule <- mpCtrl(list(
 ))
 ```
 
-- For this specific application, a function is available that simplifies the process and uses standard ICES assumptions and names. For example the call below creates a control structure that implements the standard ICES advice rule using the operational points currently in use for sol.27.4, and some deviances in SSB and F previously constructed. The function is instructed to use all recruitment estimates but the last two (`recyrs=-2`), in the forecast.
-
-```{r, eval=FALSE}
-sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423)
-
-arule <- icesControl(SSBdevs=sdevs$SSB, Fdevs=sdevs$F,
-  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
-```
-
 - A plot of a particular hockeystick HCR can be obtained with an specific function
-
-```{r, echo=FALSE}
-arule <- icesControl(SSBdevs=FLQuant(), Fdevs=FLQuant(),
-  Btrigger=42838, Blim=0, Ftarget=0.207, Fmin=0, recyrs=-2)
-```
 
 ```{r}
 plot_hockeystick.hcr(arule$hcr, labels=c(trigger="MSYBtrigger", limit="",
