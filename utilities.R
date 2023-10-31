@@ -6,14 +6,12 @@
 #
 # Distributed under the terms of the EUPL-1.2
 
-
 # PARALLEL setup via doFuture
 
 if(exists("cores")) {
   plan(multisession, workers=cores)
   options(doFuture.rng.onMisuse="ignore")
 }
-
 
 # icesmetrics {{{
 
@@ -85,23 +83,28 @@ firstYear <- function(x) {
 
 # decisions {{{
 
-decisions <- function(x, year=1, iter=NULL) {
+decisions <- function(x, year=NULL, iter=NULL) {
 
+  # EXTRACT tracking and args
   trac <- tracking(x)
   args <- args(x)
 
-  year <- as.numeric(year)
+  # SET years if null
+  if(is.null(year))
+    year <- head(args$vy, -args$management_lag)
 
+  # SET iters if not given
   if(is.null(iter))
     iter <- seq(dims(x)$iter)
 
+  # FUNCTION to compute table along years
   .table <- function(d) {
 
     its <- dims(d)$iter
     dmns <- dimnames(d)
 
     if(its == 1) {
-    data.frame(metric=dmns$metric, year=dmns$year, value=prettyNum(d))
+      data.frame(metric=dmns$metric, year=dmns$year, value=prettyNum(d))
     } else {
       data.frame(metric=dmns$metric, year=dmns$year,
         value=sprintf("%s (%s)", 
@@ -110,27 +113,45 @@ decisions <- function(x, year=1, iter=NULL) {
     }
   }
 
+  # COMPUTE tables
   res <- lapply(year, function(y) {
   
-    ay  <-  y
+    # GET advice, data and management years
+    ay  <-  an(y)
     dy <- ay - args$data_lag
     my  <- ay + args$management_lag
 
-    dmet <- c("SB.om", "SB.obs", "SB.est")
-    amet <- c("met.hcr", "decision.hcr", "fbar.hcr", "hcr", "fbar.isys", "isys",
-      "fwd", "C.om")
+    # EXTRACT data year metrics
+    dmet <- c("SB.om", "SB.obs", "SB.est", "met.hcr")
 
     dout <- trac[dmet, ac(dy),,,, iter]
-    aout <- trac[amet, ac(ay),,,, iter]
-    mout <- trac["SB.om", ac(my),,,,iter] / trac["SB.om", ac(ay),,,,iter]
-    dimnames(mout)$metric <- "diff(SB.om)"
 
-    rbind(.table(dout), .table(aout), .table(mout))      
+    # EXTRACT advice year metrics
+    amet <- c("decision.hcr", "fbar.hcr", "hcr", "fbar.isys", "isys",
+      "fwd", "C.om")
+
+    aout <- trac[amet, ac(ay),,,, iter]
+
+    # EXTRACT management year metrics
+    mmet <- "SB.om"
+   
+    mout <- trac[mmet, ac(my),,,, iter]
+
+    # COMPUTE management year metrics effect, my / ay
+    eout <- trac[mmet, ac(my),,,,iter] / trac[mmet, ac(ay),,,,iter]
+    
+    dimnames(eout)$metric <- paste0("diff(", mmet, ")")
+
+    # BIND into single table
+    rbind(.table(dout), .table(aout), .table(mout), .table(eout))
   })
 
-  do.call(cbind, res)
+  if(length(res) > 1)
+    res <- cbind(res[[1]], do.call(cbind,
+      lapply(res[-1], function(i) i[,-1])))
+  else
+    res <- res[[1]]
+
+  return(res)
 }
 # }}}
-
-
-# TODO: CODE showMethod

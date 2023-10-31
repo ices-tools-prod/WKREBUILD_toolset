@@ -48,6 +48,12 @@ srpars <- bootstrapSR(run, iters=it,
 
 om <- fwdWindow(window(om, end=2023), end=fy, nsq=5, fun=c("mean", wt="sample"))
 
+# resample 10 years for wt and mat, 5 for catch.sel
+
+om <- fwdWindow(om, end=fy, nsq=3,
+  fun=c(wt='sample', mat='sample', catch.sel='sample'),
+  years=c(wt=10, mat=10, catch.sel=10))
+
 # - CONSTRUCT iem
 
 # TAC overshoot truncated exponential (1 ~ 1.4)
@@ -81,6 +87,28 @@ advice_runs <- future_lapply(oms, mp, iem=iem, ctrl=arule, args=mseargs,
 plan(sequential)
 
 # --- model.R
+
+#
+rule <- mpCtrl(list(
+
+  # (est)imation method: shortcut.sa + SSB deviances
+  est = mseCtrl(method=shortcut.sa,
+    args=list(SSBdevs=sdevs$SSB)),
+
+  # hcr: hockeystick (fbar ~ ssb | lim, trigger, target, min)
+  hcr = mseCtrl(method=hockeystick.hcr,
+    args=list(lim=8.34e+5, trigger=1.168e+6,
+    target=0.075, min=0.015, metric="ssb", output="fbar")),
+
+  # (i)mplementation (sys)tem: tac.is (C ~ F) + F deviances
+  isys = mseCtrl(method=tac.is,
+    args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
+  ))
+
+plot_hockeystick.hcr(rule$hcr,
+  labels=c(target=expression(F[target]), min=expression(0.2%.%F[target]),
+    lim=expression(B[lim]), trigger=expression(B[trigger]))) +
+  ylab("") + xlab("SSB")
 
 
 # --- output.R

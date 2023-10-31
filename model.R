@@ -13,7 +13,7 @@ mkdir("model")
 library(mse)
 
 # CHOOSE number of cores for doFuture
-cores <- 3
+cores <- 2
 
 source("utilities.R")
 
@@ -70,22 +70,18 @@ opts <- combinations(
 
 # RUN for all options on 'hcr' control element
 system.time(
-  plans <- mps(window(om, start=2020), ctrl=arule, args=mseargs, hcr=opts)
+  plans <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 )
 
 
 # --- MP runs with TAC change limits
 
 #
-args(arule$isys, c('dtaclow', 'dtacupp')) <- c(0.85, 1.15)
 args(arule$isys)[c('dtaclow', 'dtacupp')] <- c(0.85, 1.15)
-debug(arule, 'isys')
-
-lims <- mp(om, iem=iem, ctrl=arule, args=mseargs)
 
 # RUN for all options on 'hcr' control element
 system.time(
-  plans <- mps(window(om, start=2020), ctrl=arule, args=mseargs, hcr=opts)
+  plans_lim <- mps(window(om, start=2020), ctrl=arule, args=mseargs, hcr=opts)
 )
 
 
@@ -102,7 +98,8 @@ system.time(
 
 # --- SAVE
 
-save(runf0, advice, plans, plans_fr, file="model/model.rda", compress="xz")
+save(runf0, advice, plans, plans_lim, plans_fr,
+  file="model/model.rda", compress="xz")
 
 # CLOSE cluster
 plan(sequential)

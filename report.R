@@ -93,6 +93,13 @@ plotBPs(perf[year=='all']) + ylim(c(0, NA))
 plotBPs(perf[year=='long']) + ylim(c(0, NA))
 dev.off()
 
+library(ggh4x)
+
+plotBPs(perf[year=='all']) + ylim(c(0, NA)) +
+  facetted_pos_scales(y = list(
+  name == "recovery" ~ scale_y_continuous(limits = c(2022, 2030)))) +
+  theme(strip.text.x = element_text(size = 16))
+
 plotBPs(perf[year=='short'], statistics=c("AAVC", "C", "risk2")) +
   ylim(c(0, NA))
 
@@ -109,24 +116,24 @@ dev.off()
 
 dat <- perf_year[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
 
-pubpng("perf_pblim_mp.png",
+taf.png("perf_pblim_mp.png")
 ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
   geom_line(linewidth=0.5) +
   geom_point(size=4, colour="white") + geom_point(size=2) +
   geom_hline(yintercept=0.95, linetype=2)
-)
+dev.off()
 
 # PLOT PBtrigger by year and mp
 
 dat <- perf_year[statistic == "PBtrigger", .(PBtrigger=mean(data)), by=.(mp, year)]
 
-pubpng("perf_pbtrigger_mp.png",
+taf.png("perf_pbtrigger_mp.png",
 ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
   geom_line(linewidth=0.5) +
   geom_point(size=4, colour="white") + geom_point(size=2) +
   geom_hline(yintercept=0.50, linetype=2)
-)
+dev.off()
 
 # RENDER report.Rmd
 
-# rmarkdown::render("report.Rmd", output_dir="report")
+rmarkdown::render("report.Rmd", output_dir="report")
