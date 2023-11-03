@@ -36,11 +36,11 @@ annualstats <- list(
 
   # mean(C)
   C=list(~iterMeans(C), name="mean(C)",
-    desc="Mean catch over years"),
+    desc="Mean catch per year"),
 
   # cv(C)
   cvC=list(~sqrt(iterVars(C)) / iterMeans(C), name="cv(C)",
-    desc="CV of catch over years")
+    desc="CV of catch per year")
 )
 
 fullstats <- list(

@@ -1,14 +1,16 @@
 ---
 title: "FLR toolset for evaluating recovery plans for ICES WKREBUILD2"
 author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: tint::tintHtml
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: github_document
 license: Creative Commons Attribution-ShareAlike 4.0 International Public License
 ---
 
 ```{r knitr, include = FALSE}
 library(knitr)
 opts_chunk$set(
+  message=FALSE,
+  warning=FALSE,
   collapse = TRUE,
   comment = "#>",
   out.width="92%",
@@ -100,8 +102,9 @@ om <- FLom(stock=propagate(run, it), refpts=refpts, model='mixedsrr',
 This call builds the object with the initial population (*run*), propagated or replicated for the desired number of iterations (*it*), the matching biological reference points (*refpts*), the SRR to be applied and the set of parameters obtained from the bootstrap step (*model* and *params*), and the deviances to apply over the future recruitment estimates. These have been generated in this case following a log-normal distribution, with variance and autocorrelation computed from the bootstrap analysis.
 
 ```{r loadbootstrap, echo=FALSE, eval=TRUE}
-load("data/bootstrap.rda")
-load("data/data.rda")
+load("data/bootstrap.rda", verbose=FALSE)
+load("data/data.rda", verbose=FALSE)
+load("model/model.rda", verbose=FALSE)
 ```
 
 ```{r srdevs, eval=TRUE}
@@ -109,7 +112,8 @@ srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(dy, fy))
 ```
 
 ```{r plotsrdevs, echo=FALSE, eval=TRUE}
-plot(srdevs)
+plot(srdevs) +
+  ggtitle("SRR deviances ~ LNAR1(0, sigmaR, rho)")
 ```
 
 The OM can now be extended until the final year (*fy*). The default call to `fwdWindow()` sets both future biology (weights, maturity and natural mortality) and fishery dynamics (selectivity and discards ratio) to remain as the average of the last 3 years in the model run
@@ -125,15 +129,15 @@ om <- fwdWindow(window(om, end=2023), end=fy, nsq=5,
   fun=c("mean", wt="sample"))
 ```
 
-An Observation Error Model is then set that contains past stock observations and adds future deviances to be applied to future data collection. In this case, lognormal errors in catch.n, with $SD=0.2$ were added.
+The following MP runs do not include any error or bias in observations (catch and biological sampling), as a shortcut to the stock assessment is being used to obtain the stock status metrics. A full-feedback evaluation of an MP, in which the stock assessment or any status indicator is computed from catch, biology or survey data, an object of class `FLoem` can be constructed for this purpose. The class contains a method to be applied to observe the OM, add any specified error or bias, and merge those with past observations.
 
-```{r oem}
-oem <- FLoem(
-  observations=list(stk=stock(om)),
-  deviances=list(stk=FLQuants(catch.n=rlnorm(500, catch.n(om) %=% 0, 0.2))),
-  method=perfect.oem
-)
+Implementation error can also be incorporated in the evaluation of MPs. An object is assembled containing the choice of implementation dynamics and the levels of error. An approximate 10% error in implementation can be added, for example, through a LN(0, 0.10) distribution as follows.
+
+```{r iem}
+iem <- FLiem(method=noise.iem,
+  args=list(noise=rlnorm(500, rec(om) %=% 0, 0.1)))
 ```
+
 
 # Evaluation of recovery rules, `model.R`
 
@@ -146,7 +150,8 @@ runf0 <- fwd(om, control=fwdControl(year=seq(2024, 2042), quant="fbar",
 
 ```{r plotrunf0, echo=FALSE, eval=TRUE}
 plot(runf0) +
-  geom_vline(xintercept=2023.5, linetype=2, color='gray')
+  geom_vline(xintercept=2023.5, linetype=2, color='gray') +
+  ggtitle("fwd(F=0), 2024-2042")
 ```
 
 Recovery rules, or any other management procedure (MP), are composed of a number of steps for which modules can be specified in an object of the `mpCtrl` class. The rules under analysis for WKREBUILD2 consist of three elements:
@@ -175,7 +180,7 @@ arule <- mpCtrl(list(
 
 This `mpCtrl` object implements the ICES advice rule with biomass trigger and F target levels taken from the *eqsim*-based calculations of the last benchmark for this stock. 
 
-```{r}
+```{r, eval=TRUE}
 plot_hockeystick.hcr(arule$hcr, labels=c(trigger="MSYBtrigger", limit="",
   min="", target="Ftarget")) + xlab("SSB") + ylab("F")
 ```
@@ -214,75 +219,88 @@ opts <- combinations(
   min=c(0, 0.05))
 ```
 
-This list can now be used in the call to `mps()`
+This list can now be used in the call to `mps()` to evaluate the resulting six MPs.
 
 ```{r plans}
 plans <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 ```
 
+The returned object is a list containing one `FLmse` object for each alternative HCR formulation, which we can plot preceded by the OM
+
+```{r plotplans, eval=TRUE}
+plot(om, plans)
+```
+
 # Computing and summarizing performance, `output.R`
 
-- The performance of alternative MPs is evaluated by specifying a series of performance statistics. Four example statistics have been defined:
+The performance of alternative MPs is evaluated against a set of performance statistics and for one or more time frames, either continuous or across years.
 
-  - PBlim: Probability of SSB is above Blim.
-  - C: Mean catch.
-  - AVVC: Average annual variability in catch.
-  - risk: ICES Risk 2, probability that spawner biomass is above Blim once
+Two sets of statistics with potential relevance to ICES have been defined in `utilities.R`. The first one (`r ``annualstats`) includes those to be computed on a yearly basis:
 
-- Performance statistics are defined as a list containing a formula to compute it, a name, and a description. Formulas can make use or existing or new functions. Additional statistics can be easily formulated following these examples. Elements in the formula must refer to aither fefrenec points in the 'erfpts' slot of the OM, e.g. 'Blim', or to metrics defined in the call to 'performance()'. For example, `C=catch`.
+- *PBlim*, the probability that spawner biomass is above $B_{lim}$.
+- *PBtrigger*, the probability that spawner biomass is above $B_{trigger}$.
+- *C*, Mean catch per year.
+- *cvC*, CV of catch per year.
 
-```{r, eval=FALSE}
-icesstats <- list(
+Others are to be calculated for a period, or different periods, of years, which are specified in the call to `performance()`. Those currently defined are:
+ 
+- *C*, Mean catch over years.
+- *AVVC*, Average annual variability in catch.
+- *IACC*, Percentage inter-annual change in catch.
+- *risk2*, ICES Risk 2, probability that spawner biomass is above $B_{lim}$ once.
+- *firstyear*, First year in which $P(B/B_{lim}) >= 0.95$.
 
-  # P(SB>SBlim)
-  PBlim=list(~iterMeans((SB/Blim) > 1), name="P(SB>SB[lim])",
-    desc="Probability that spawner biomass is above Blim"),
+A number of performance statistics are available in the `mse` package, each of them defined by formula, a name and a description.
 
-  # mean(C)
-  C=list(~yearMeans(C), name="mean(C)",
-    desc="Mean catch over years"),
+```{r statistics, eval=TRUE}
+data(statistics)
 
-  # AVVC
-  AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
-    name="AAV(C)", desc="Average annual variability in catch"),
+names(statistics)
 
-  # P(SB < SBlim) at least once
-  risk2=list(~yearMeans(iterMeans(((SB/Blim) < 1) > 0)),
-    name="once(P(SB<B[limit]))",
-    desc="ICES Risk 2, probability that spawner biomass is above Blim once")
-)
+statistics$risk2
 ```
 
-- The 'performance' function computes the specified statistics making use of the specified metrics and reference points. A set of metrics is defined by default for OM objects: SB for ssb, F for fbar and C for catch. The time period over which performance is to be computed is also specified. This can be either individual years or a period of them over which to compute a mean or median
+Performance across all MP runs can be computed by specifying what statistics to use and over what time period. The *years* argument can set as a vector
 
-```{r, eval=FALSE}
-
-# COMPUTE yearly performance statistics
-perf_byear <- performance(runs, statistics=stats[-3], years=2023:2041)
-
-# COMPUTE final performance statistics (2023-2041)
-perf_end <- performance(runs, statistics=stats, years=list(2035:2041))
+```{r, eval=TRUE}
+performance(c(plans, F0=runf0), statistics=annualstats, years=2023:2041)
 ```
+
+in which case the statistics are computed annually. Or it could be of class *list*, and the statistics will be applied over the whole period or periods
+
+```{r, eval=TRUE}
+performance(c(plans, F0=runf0), statistics=fullstats,
+  years=list(short=2023:2026, long=2023:2041))
+```
+
+Note how the initial projection with no catches, *runF0*, gets added to the set of MPs being compared.
+
+Additional performance statistics can be defined as a list containing a formula to compute it, a name, and a description. Formulas can make use or existing or new functions, and refer to either *metrics*, functions that return summary values computed from the OM, or the names of reference points stored in the *refpts* slot. For example, the *risk1* statistics is defined by the formula 
+`~yearMeans(iterMeans((SB/SBlim) < 1))`, where `SB` refers to the metric defined to call the `ssb` method, while `SBlim` is one of the reference points defined in the `FLom` object.
+
 
 # Generating graphical outputs, `report.R`
 
-- A number of plot functions are available for displaying the results of the MP runs. For example, plots of the time series
-
-- The 'mseviz' package provides a set of plot functions that attempt to compare the performance of alternative MPs on some chosen. For example boxplots of each performance metric by MP
-
-```{r perf_bps, echo=FALSE}
-include_graphics("report/perf_bps.png")
+```{r output, eval=TRUE, echo=FALSE, hide=TRUE}
+load('output/output.rda')
 ```
 
-- Also of trade-offs of a statistics, typically catch, against others
+A number of plot functions are available in the [mseviz](https://flr-project.org/mseviz) package for displaying and comparing the results of the MP runs and the performance statistics. For example boxplots of each multi-annual performance metric by MP can be displayed by calling
 
-```{r perf_tos, echo=FALSE}
-include_graphics("report/perf_tos.png")
+```{r plotbps, eval=TRUE}
+plotBPs(perf[year=='all']) + ylim(c(0, NA))
+```
+
+The `plotOMruns` function present a time series of a single metric (e.g. `ssb`) for the OM, in the top panel, and the various MPs below it.
+
+```{r plotssbruns}
+plotOMruns(window(ssb(om), end=2023), FLQuants(lapply(plans, ssb))) +
+  ggtitle("SSB (t)")
 ```
 
 # Specific functions, `utilities.R`
 
-- A number of functions are currently defined in the `utilities.R` file. any function of general application will be incorporated into any of the FLR packages being used. ICES-specific functions should be integrated into an MSE-related package, or on any of the existing ICEs R package, if suitable.
+- A number of functions are currently defined in the `utilities.R` file. any function of general application will be incorporated into any of the FLR packages being used. ICES-specific functions should be integrated into an MSE-related package, or on any of the existing ICES R packages, if suitable.
 
 # Alternative steps, `trove.R`
 
@@ -321,8 +339,8 @@ file <- file.path(boot.dir(), "SOFTWARE.bib")
 write(unlist(bib), file=file, append=FALSE)
 ```
 
-The `SOFTWARE.bib` file now contains the github commit references to the package versions that were installed from the [FLR r-universe](https://flr.r-universe.dev) repository. A call to `icesTAF::taf.bootstrap(software=TRUE)` would download and install locally those same versions. The file will also ensure that the TAF server in ICES runs on the same versions used locally.
+The `SOFTWARE.bib` file now contains the github commit references to the package versions that were installed via the [FLR r-universe](https://flr.r-universe.dev) repository. A call to `icesTAF::taf.bootstrap(software=TRUE)` would download and install those precise versions in the `bootstrap` folder. The file will also be used by the TAF server in ICES to use the same versions when running the code.
 
-# More information and help
+# Asking for help
 
-
+ To report bugs or make suggestions regarding this example, please use the [repository issues](https://github.com/ices-tools-prod/WKREBUILD_toolset/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc). If the problem is with code in any one particular package, please use the corresponding issue page for its repository at the [FLR github project](https://github.com/flr/).
