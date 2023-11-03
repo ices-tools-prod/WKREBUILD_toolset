@@ -1,12 +1,13 @@
 ---
-title: FLR toolset for evaluating recovery plans for ICES WKREBUILD2
-author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
-date: 03 november 2023
 output: github_document
-license: Creative Commons Attribution-ShareAlike 4.0 International Public License
 created: 03-11-2023T13:02:40+01:00
-updated: 03-11-2023T17:12:45+01:00
+updated: 03-11-2023T17:16:52+01:00
 ---
+
+# FLR toolset for evaluating recovery plans for ICES WKREBUILD2
+
+- Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
+- 03 november 2023
 
 
 
