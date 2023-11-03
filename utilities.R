@@ -123,6 +123,7 @@ decisions <- function(x, year=NULL, iter=NULL) {
 
     # EXTRACT data year metrics
     dmet <- c("SB.om", "SB.obs", "SB.est", "met.hcr")
+    dmet <- c("SB.om", "SB.obs", "SB.est")
 
     dout <- trac[dmet, ac(dy),,,, iter]
 
@@ -148,7 +149,7 @@ decisions <- function(x, year=NULL, iter=NULL) {
 
   if(length(res) > 1)
     res <- cbind(res[[1]], do.call(cbind,
-      lapply(res[-1], function(i) i[,-1])))
+      lapply(res[-1], function(i) i[, -1])))
   else
     res <- res[[1]]
 
