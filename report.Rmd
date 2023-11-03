@@ -352,7 +352,7 @@ A number of functions are currently defined in the `utilities.R` file. any funct
 
 # Alternative steps, `trove.R`
 
-For
+For a number of steps shown in the example analysis, alternatives already exist using available FLR functions and methods. Please look into the [file](https://github.com/ices-tools-prod/WKREBUILD_toolset/blob/main/trove.R) to see if any could be useful to your case study.
 
 # Reproducibility and version control
 

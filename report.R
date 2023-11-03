@@ -155,6 +155,6 @@ ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
   geom_hline(yintercept=0.50, linetype=2)
 )
 
-# RENDER report.Rmd
+# RENDER report.Rmd as tutorial.html
 
-# rmarkdown::render("report.Rmd", output_dir="report")
+rmarkdown::render('report.Rmd', output_file='tutorial.html')
