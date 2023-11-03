@@ -1,17 +1,9 @@
----
-output: github_document
-created: 03-11-2023T13:02:40+01:00
-updated: 03-11-2023T17:16:52+01:00
----
 
 # FLR toolset for evaluating recovery plans for ICES WKREBUILD2
 
 - Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
-- 03 november 2023
 
-
-
-# Installation
+## Installation
 
 The latest version of the required [FLR](https:://flr-project.org) packages, and all their dependencies, can be installed from the [FLR R-universe page](https://flr.r-universe.dev) by calling:
 
@@ -29,9 +21,9 @@ They can also be installed from the source code in the [FLR github repositories]
 remotes::install_github(paste0("flr/", c("FLCore", "ggplotFL", "FLFishery", "FLasher", "FLSRTMB", "mse", "mseviz")))
 ```
 
-# Setup
+## Setup
 
-## Progress reporting
+### Progress reporting
 
 The [mse](https://flr-project.org/mse) package allows setting up notifications of process on long computations through [progressr](https://progressr.futureverse.org/). You can request a progress bar to be shown for the calls to the `mp()`, `mps()` nd `bootstrapSR` functions in this way
 
@@ -41,7 +33,7 @@ handlers(global=TRUE)
 handlers("progress")
 ```
 
-## Parallelization
+### Parallelization
 
 Calls to various functions in the [mse](https://flr-project.org/mse) package (`mp` and `mps`) can be speeded-up through parallelization. For a single `mp()` call, iterations are split in blocks across the number of cores available. In the case of `mps()`, each procedure is executed in a separate process across the available cores.
 
@@ -49,7 +41,7 @@ If the `cores` variable is defined in `data.R` or 'model.R', the call to [plan()
 
 The number of cores to use should be chosen by considering the available memory. Performance will be poor if too many cores are trying to use too little memory.
 
-## Running the code
+### Running the code
 
 Once the repository has been cloned, only two steps are necessary to test run the example code, once `icesTAF` has been loaded:
 
@@ -63,9 +55,9 @@ taf.bootstrap()
 make.all()
 ```
 
-# TAF repository
+## TAF repository
 
-## Repository description
+### Repository description
 
 A new repository should contain the following folder and tree structure, which includes only initial data files, the corresponding `DATA.bib` file, a BibTeX file with relevant bibliographic references, and the scripts that will run the analysis. These are set based on the example dataset, sol.27.4, and will need to be adapted for a different stock.
 
@@ -87,7 +79,7 @@ A new repository should contain the following folder and tree structure, which i
 
 ![](https://user-images.githubusercontent.com/1029847/249617706-e37724ad-f4a8-47d6-a481-c115cefd8b3b.png)
 
-## bootstrap/initial
+### bootstrap/initial
 
 The essential inputs for the analysis include the result of the stock assessment model fit and the current set of reference points.
 
@@ -99,7 +91,7 @@ For example, `bootstrap/initial/data/sol274.rda` contains the following objects:
 
 Uncertainty in past dynamics and initial conditions might have been already quantified, for example by employing the McMC sampling procedure available in the stock assessment model, by bootstrap of model inputs, or through a ensemble of model fits. If that is the case, the conditioning steps in `data.R` should be adapted accordingly. 
 
-# OM conditioning, `data.R`
+## OM conditioning, `data.R`
 
 From the stock assessment run, or a set of chosen ensemble runs, an operating model (OM) is to be constructed to evaluate the alternative advice rules by introducing some of the potential uncertainty in future dynamics, in this case in recruitment.
 
@@ -156,7 +148,7 @@ iem <- FLiem(method=noise.iem,
 ```
 
 
-# Evaluation of recovery rules, `model.R`
+## Evaluation of recovery rules, `model.R`
 
 To construct a baseline level for comparing the candidate recovery procedures, a projection under a full fishery closure ($\bar{F} = 0$) can be carried out.
 
@@ -282,7 +274,7 @@ include_graphics("report/plans.png")
 <p class="caption">plot of chunk plotplans</p>
 </div>
 
-# Computing and summarizing performance, `output.R`
+## Computing and summarizing performance, `output.R`
 
 The performance of alternative MPs is evaluated against a set of performance statistics and for one or more time frames, either continuous or across years.
 
@@ -352,7 +344,7 @@ Additional performance statistics can be defined as a list containing a formula 
 `~yearMeans(iterMeans((SB/SBlim) < 1))`, where `SB` refers to the metric defined to call the `ssb` method, while `SBlim` is one of the reference points defined in the `FLom` object.
 
 
-# Generating graphical outputs, `report.R`
+## Generating graphical outputs, `report.R`
 
 A number of plot functions are available in the [mseviz](https://flr-project.org/mseviz) package for displaying and comparing the results of the MP runs and the performance statistics. For example boxplots of each multi-annual performance metric by MP can be displayed by calling
 
@@ -378,7 +370,7 @@ include_graphics("report/onruns.png")
 <p class="caption">plot of chunk plotssbruns</p>
 </div>
 
-# Specific functions, `utilities.R`
+## Specific functions, `utilities.R`
 
 A number of functions are currently defined in the `utilities.R` file. any function of general application will be incorporated into any of the FLR packages being used. ICES-specific functions should be integrated into an MSE-related package, or on any of the existing ICES R packages, if suitable.
 
@@ -387,11 +379,11 @@ A number of functions are currently defined in the `utilities.R` file. any funct
 - *fullstats*, a list of performance statistics to compute over years.
 - *firstYear*, a function to compute the first year in which a relative statistic gets to 1.
 
-# Alternative steps, `trove.R`
+## Alternative steps, `trove.R`
 
 For
 
-# Reproducibility and version control
+## Reproducibility and version control
 
 Once an analysis is running, the mechanisms of TAF should be used to keep track of what package versions were used. This ensures the reproducibility of the whole analysis.
 
@@ -426,6 +418,6 @@ write(unlist(bib), file=file, append=FALSE)
 
 The `SOFTWARE.bib` file now contains the github commit references to the package versions that were installed via the [FLR r-universe](https://flr.r-universe.dev) repository. A call to `icesTAF::taf.bootstrap(software=TRUE)` would download and install those precise versions in the `bootstrap` folder. The file will also be used by the TAF server in ICES to use the same versions when running the code.
 
-# Asking for help
+## Asking for help
 
  To report bugs or make suggestions regarding this example, please use the [repository issues](https://github.com/ices-tools-prod/WKREBUILD_toolset/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc). If the problem is with code in any one particular package, please use the corresponding issue page for its repository at the [FLR github project](https://github.com/flr/).
