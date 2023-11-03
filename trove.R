@@ -110,6 +110,15 @@ plot_hockeystick.hcr(rule$hcr,
     lim=expression(B[lim]), trigger=expression(B[trigger]))) +
   ylab("") + xlab("SSB")
 
+# - EXAMPLE oem
+
+oem <- FLoem(
+  observations=list(stk=stock(om)),
+  deviances=list(stk=FLQuants(stock.n=rlnorm(500, catch.n(om) %=% 0, 0.2))),
+  method=shortcut.oem)
+
+# RUN applying the OEM
+error <- mp(om, oem=oem, ctrl=arule, args=mseargs)
 
 # --- output.R
 
