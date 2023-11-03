@@ -1,14 +1,22 @@
 ---
-title: FLR toolset for evaluating recovery plans for ICES WKREBUILD2
+title: "FLR toolset for evaluating recovery plans for ICES WKREBUILD2"
 author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl
-date: 03 november 2023
+date: "`r format(Sys.time(), '%d %B %Y')`"
 output: github_document
 license: Creative Commons Attribution-ShareAlike 4.0 International Public License
-created: 03-11-2023T13:02:40+01:00
-updated: 03-11-2023T17:12:45+01:00
 ---
 
-
+```{r knitr, include = FALSE}
+library(knitr)
+opts_chunk$set(
+  eval=TRUE,
+  message=FALSE,
+  warning=FALSE,
+  collapse = TRUE,
+  comment = "#>",
+  out.width="92%"
+)
+```
 
 # Installation
 
@@ -127,10 +135,9 @@ This call builds the object with the initial population (*run*), propagated or r
 srdevs <- rlnormar1(sdlog=srpars$sigmaR, rho=srpars$rho, years=seq(dy, fy))
 ```
 
-<div class="figure">
-<img src="report/om_deviances.png" alt="plot of chunk plotsrdevs" width="92%" />
-<p class="caption">plot of chunk plotsrdevs</p>
-</div>
+```{r plotsrdevs, echo=FALSE, eval=TRUE}
+include_graphics("report/om_deviances.png")
+```
 
 The OM can now be extended until the final year (*fy*). The default call to `fwdWindow()` sets both future biology (weights, maturity and natural mortality) and fishery dynamics (selectivity and discards ratio) to remain as the average of the last 3 years in the model run
 
@@ -164,10 +171,9 @@ runf0 <- fwd(om, control=fwdControl(year=seq(2024, 2042), quant="fbar",
   value=0))
 ```
 
-<div class="figure">
-<img src="report/run_f0.png" alt="plot of chunk plotrunf0" width="92%" />
-<p class="caption">plot of chunk plotrunf0</p>
-</div>
+```{r plotrunf0, echo=FALSE, eval=TRUE}
+include_graphics("report/run_f0.png")
+```
 
 Recovery rules, or any other management procedure (MP), are composed of a number of steps for which modules can be specified in an object of the `mpCtrl` class. The rules under analysis for WKREBUILD2 consist of three elements:
 
@@ -195,17 +201,11 @@ arule <- mpCtrl(list(
 
 This `mpCtrl` object implements the ICES advice rule with biomass trigger and F target levels taken from the *eqsim*-based calculations of the last benchmark for this stock. 
 
-
-```r
+```{r advicerule}
 include_graphics("report/advice_hcr.png")
 ```
 
-<div class="figure">
-<img src="report/advice_hcr.png" alt="plot of chunk advicerule" width="92%" />
-<p class="caption">plot of chunk advicerule</p>
-</div>
-
-Applying the MP specified by such a control structure requires a call to the *mp()* function with the OM, OEM and control objects as main arguments. Only one extra argument is required, a list containing at least the starting year of the simulation (*iy*). By default the simulation will run to the last year of the 'om' object (*fy*), on an annual basis (*frq*), and with one year of lag in both data (*data_lag*) and decision implementation (*management_lag*). Running an MP that sets advice for a three-year period, for example, only requires passing the corresponding value in the list, 2023, 3.
+Applying the MP specified by such a control structure requires a call to the *mp()* function with the OM, OEM and control objects as main arguments. Only one extra argument is required, a list containing at least the starting year of the simulation (*iy*). By default the simulation will run to the last year of the 'om' object (*fy*), on an annual basis (*frq*), and with one year of lag in both data (*data_lag*) and decision implementation (*management_lag*). Running an MP that sets advice for a three-year period, for example, only requires passing the corresponding value in the list, `r  list(iy=2023, frq=3)`.
 
 ```r
 mseargs <- list(iy=2023, fy=2042, data_lag=1, management_lag=1, frq=1)
@@ -219,14 +219,8 @@ advice <- mp(om, iem=iem, ctrl=arule, args=mseargs)
 
 The result of a call to *mp()* is returned as an object of class `FLmse`, which contains the projected OM, the `mpCtrl` (*control*), argument list (*args*) and OEM (*oem*) objects used for it, and an array that reports on the decisions made and values applied at every step (*tracking*). For example, the OM biomass (*SB.om*), the estimate of it used by the HCR (*met.hcr*), the decision taken by the hcr (*decision.hcr*, 1, 2 and 3 for each section of the hockeystick), the output of the HCR (*hcr*), the $\bar{F}$ value used in the short-term forecast (*fbar.isys*), and the catch advice obtained (*isys*).
 
-
-```
-#> Loading objects:
-#>   runf0
-#>   advice
-#>   plans
-#>   plans_lim
-#>   plans_fr
+```{r, echo=FALSE}
+load("model/model.rda")
 ```
 
 
@@ -271,15 +265,9 @@ plans <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 
 The returned object is a list containing one `FLmse` object for each alternative HCR formulation, which we can plot preceded by the OM
 
-
-```r
+```{r plotplans}
 include_graphics("report/plans.png")
 ```
-
-<div class="figure">
-<img src="report/plans.png" alt="plot of chunk plotplans" width="92%" />
-<p class="caption">plot of chunk plotplans</p>
-</div>
 
 # Computing and summarizing performance, `output.R`
 
@@ -302,23 +290,12 @@ Others are to be calculated for a period, or different periods, of years, which 
 
 A number of performance statistics are available in the `mse` package, each of them defined by formula, a name and a description.
 
-
-```r
+```{r statistics, eval=TRUE}
 data(statistics)
 
 names(statistics)
-#>  [1] "SB0"     "minSB0"  "SBMSY"   "Ftarget" "FMSY"    "green"   "red"     "PSBMSY"  "PSBlim"  "PSB20B0" "risk1"   "risk2"   "risk3"   "C"       "CMSY"    "AAVC"    "IACC"   
-#> [18] "PC0"
 
 statistics$risk2
-#> [[1]]
-#> ~yearMeans(iterMeans(((SB/SBlim) < 1) > 0))
-#> 
-#> $name
-#> [1] "once(P(SB<B[limit]))"
-#> 
-#> $desc
-#> [1] "ICES Risk 2, probability that spawner biomass is above Blim once"
 ```
 
 Performance across all MP runs can be computed by specifying what statistics to use and over what time period. The *years* argument can set as a vector
@@ -355,27 +332,15 @@ Additional performance statistics can be defined as a list containing a formula 
 
 A number of plot functions are available in the [mseviz](https://flr-project.org/mseviz) package for displaying and comparing the results of the MP runs and the performance statistics. For example boxplots of each multi-annual performance metric by MP can be displayed by calling
 
-
-```r
+```{r plotbps}
 include_graphics("report/perf_bps.png")
 ```
 
-<div class="figure">
-<img src="report/perf_bps.png" alt="plot of chunk plotbps" width="92%" />
-<p class="caption">plot of chunk plotbps</p>
-</div>
-
 The `plotOMruns` function present a time series of a single metric (e.g. `ssb`) for the OM, in the top panel, and the various MPs below it.
 
-
-```r
+```{r plotssbruns}
 include_graphics("report/onruns.png")
 ```
-
-<div class="figure">
-<img src="report/onruns.png" alt="plot of chunk plotssbruns" width="92%" />
-<p class="caption">plot of chunk plotssbruns</p>
-</div>
 
 # Specific functions, `utilities.R`
 
