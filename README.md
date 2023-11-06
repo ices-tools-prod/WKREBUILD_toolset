@@ -24,3 +24,7 @@ remotes::install_github(paste0("flr/", c("FLCore", "ggplotFL", "FLFishery", "FLa
 # Tutorial
 
 More information on the example analysis can be found in the [tutorial](https://htmlpreview.github.io/?https://github.com/ices-tools-prod/WKREBUILD_toolset/blob/main/tutorial.html).
+
+# Release of analysis results
+
+A github release containing the results of running this code can be downloaded [here](https://github.com/ices-tools-prod/WKREBUILD_toolset/releases/tag/results_20231106).
