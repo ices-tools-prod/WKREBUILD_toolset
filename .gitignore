@@ -8,3 +8,4 @@ report/*
 test
 test.R
 test_*.R
+.Rhistory
