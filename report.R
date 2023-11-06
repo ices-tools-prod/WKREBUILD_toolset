@@ -132,29 +132,28 @@ plotOMruns(window(ssb(om), end=2023), FLQuants(lapply(plans, ssb))) +
   ggtitle("SSB (t)")
 dev.off()
 
-
 # PLOT PBlim by year and mp
 
 dat <- perf_year[statistic == "PBlim", .(PBlim=mean(data)), by=.(mp, year)]
 
-pubpng("perf_pblim_mp.png",
+taf.png("perf_pblim_mp.png")
 ggplot(dat, aes(x=year, y=PBlim, group=mp, colour=mp)) +
   geom_line(linewidth=0.5) +
   geom_point(size=4, colour="white") + geom_point(size=2) +
   geom_hline(yintercept=0.95, linetype=2)
-)
+dev.off()
 
 # PLOT PBtrigger by year and mp
 
 dat <- perf_year[statistic == "PBtrigger", .(PBtrigger=mean(data)), by=.(mp, year)]
 
-pubpng("perf_pbtrigger_mp.png",
+taf.png("perf_pbtrigger_mp.png")
 ggplot(dat, aes(x=year, y=PBtrigger, group=mp, colour=mp)) +
   geom_line(linewidth=0.5) +
   geom_point(size=4, colour="white") + geom_point(size=2) +
   geom_hline(yintercept=0.50, linetype=2)
-)
+dev.off()
 
-# RENDER report.Rmd as tutorial.html
+# RENDER tutorial.Rmd as tutorial.html
 
-rmarkdown::render('report.Rmd', output_file='tutorial.html')
+rmarkdown::render('tutorial.Rmd', output_file='tutorial.html')
