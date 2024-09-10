@@ -21,13 +21,12 @@ load("model/model.rda")
 # COMPUTE yearly performance statistics, ADD F0 as reference
 
 perf_year <- performance(c(plans, F0=runf0), statistics=annualstats,
-  years=2023:2041)
+  metrics=metrics, years=2023:2041)
 
 # COMPUTE performance statistics by periods
 
-perf <- performance(c(plans, F0=runf0), statistics=fullstats,
+perf <- performance(c(plans, F0=runf0), statistics=fullstats, metrics=metrics,
   years=list(short=2024:2028, medium=2028:2034, long=2034:2041, all=2024:2041))
-
 
 # --- TABLES
 

@@ -22,6 +22,12 @@ icesmetrics <- list(FMSY=fbar~Fmsy, SBMSY=ssb~Btrigger,
 
 # }}}
 
+# performance metrics {{{
+
+metrics <- list(Rec=rec, SB=ssb, C=catch, L=landings, F=fbar)
+
+# }}}
+
 # WKREBUILD2 performance statistics {{{
 
 annualstats <- list(
@@ -35,8 +41,12 @@ annualstats <- list(
     desc="Probability that spawner biomass is above Btrigger"),
 
   # mean(C)
-  C=list(~iterMeans(C), name="mean(C)",
+  Cy=list(~iterMeans(C), name="mean(Cy)",
     desc="Mean catch per year"),
+
+  # mean(L)
+  Ly=list(~iterMeans(L), name="mean(Ly)",
+    desc="Mean landings per year"),
 
   # cv(C)
   cvC=list(~sqrt(iterVars(C)) / iterMeans(C), name="cv(C)",
@@ -49,7 +59,10 @@ fullstats <- list(
   C=list(~yearMeans(C), name="mean(C)",
     desc="Mean catch over years"),
 
-  # AVVC
+  # mean(L)
+  L=list(~yearMeans(L), name="mean(L)",
+    desc="Mean landings over years"),
+
   # AVVC
   AAVC=list(~yearMeans(abs(C[, -1] - C[, -dim(C)[2]])/C[, -1]),
     name="AAV(C)", desc="Average annual variability in catch"),

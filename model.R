@@ -81,7 +81,7 @@ args(arule$isys)[c('dtaclow', 'dtacupp')] <- c(0.85, 1.15)
 
 # RUN for all options on 'hcr' control element
 system.time(
-  plans_lim <- mps(window(om, start=2020), ctrl=arule, args=mseargs, hcr=opts)
+  plans_lim <- mps(om, ctrl=arule, args=mseargs, hcr=opts)
 )
 
 
